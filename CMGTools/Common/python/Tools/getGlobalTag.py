@@ -66,6 +66,10 @@ def getGlobalTagByDataset(runOnMC, dataset):
             GT = 'GR_P_V40_AN3::All'
         elif 'Run2012C-PromptReco-v2' in dataset:
             GT = 'GR_P_V42_AN4::All'
+        elif 'Run2012D-part1_10Dec2012-v1' in dataset:
+            GT = 'FT_P_V42_AN4::All'
+        elif 'Run2012D-part2_17Jan2013-v1' in dataset:
+            GT = 'FT_P_V42D_AN4::All'
         elif 'Run2012D' in dataset:
             GT = 'GR_P_V42_AN4::All'
         elif 'Run2012B-05Nov2012' in dataset:
@@ -74,10 +78,6 @@ def getGlobalTagByDataset(runOnMC, dataset):
             GT = 'FT53_V10A_AN4::All'
         elif 'Run2012C-part2_05Nov2012' in dataset:
             GT = 'FT_P_V42C_AN4::All'
-        elif 'Run2012D-part1_10Dec2012-v1' in dataset:
-            GT = 'FT_P_V42_AN4::All'
-        elif 'Run2012D-part2_17Jan2013-v1' in dataset:
-            GT = 'FT_P_V42D_AN4::All'
             
 
     if GT is None:
