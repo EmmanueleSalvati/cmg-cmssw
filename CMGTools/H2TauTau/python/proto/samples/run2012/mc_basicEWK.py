@@ -1,6 +1,7 @@
 import copy
 import os
 import CMGTools.RootTools.fwlite.Config as cfg
+from   CMGTools.H2TauTau.proto.samples.getFiles import getFiles
 
 
 DYJets = cfg.MCComponent(

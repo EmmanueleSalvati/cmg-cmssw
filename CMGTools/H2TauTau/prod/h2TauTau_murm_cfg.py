@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+import pprint
 
 from CMGTools.Common.Tools.cmsswRelease import isNewerThan, cmsswIs44X,cmsswIs52X
 
@@ -8,34 +9,30 @@ sep_line = '-'*70
 
 process = cms.Process("H2TAUTAU")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 process.maxLuminosityBlocks = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
     )
 
 # -1 : process all files
-numberOfFilesToProcess = 140
+numberOfFilesToProcess = -1
 
 debugEventContent = False
 
 #tau-mu, tau-ele, di-tau, all
-channel = 'tau-mu' # 'tau-mu' #'tau-mu' 'all' 'tau-ele'
+channel    = 'tau-mu' # 'tau-mu' #'di-tau' 'all' 'tau-ele'
 jetRecalib = False
-useCHS = False
-#newSVFit enables the svfit mass reconstruction used for the H->tau tau analysis.
-# if false, much faster processing but mass is wrong. 
-newSVFit = False
+useCHS     = False 
+newSVFit   = False
 tauScaling = 0
-# increase to 1000 before running on the batch, to reduce size of log files
-# on your account
-reportInterval = 1000
+reportInterval = 500
 
 print sep_line
-print 'channel', channel
-print 'jet recalib', jetRecalib
-print 'useCHS', useCHS
-print 'newSVFit', newSVFit
+print 'channel'      , channel
+print 'jet recalib'  , jetRecalib
+print 'useCHS'       , useCHS
+print 'newSVFit'     , newSVFit
 print 'tau scaling =', tauScaling
 
 ##########
@@ -43,14 +40,19 @@ print 'tau scaling =', tauScaling
 
 
 # Input  & JSON             -------------------------------------------------
+# dataset_user  = 'cmgtools_group' 
+# dataset_name  = '/GluGluToHToTauTau_M-120_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM/PAT_CMG_V5_16_0'
 
+# dataset_user  = 'cmgtools'
+# dataset_name  = '/WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM/V5_B/PAT_CMG_V5_16_0'
+
+#dataset_user  = 'cmgtools' 
+#dataset_name  = '/TauParked/Run2012D-22Jan2013-v1/AOD/PAT_CMG_V5_16_0'
+dataset_files = 'cmgTuple.*root'
 
 dataset_user = 'cbern'
-# dataset_name = '/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM/V5_B/PAT_CMG_V5_16_0/DIMU_Colin_17Jun2013'
-dataset_name = '/DY4JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM/V5_B/PAT_CMG_V5_16_0/DIMU_Colin_17Jun2013'
-# dataset_name = '/TauPlusX/Run2012C-22Jan2013-v1/AOD/PAT_CMG_V5_16_0/DIMU_Colin_17Jun2013'
-
-dataset_files = 'cmgTuple.*root'
+dataset_name = '/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM/V5_B/PAT_CMG_V5_16_0/DIMU_Colin_17Jun2013'
+# dataset_name = '/TauPlusX/Run2012D-22Jan2013-v1/AOD/PAT_CMG_V5_16_0/DIMU_Colin_17Jun2013'
 
 # creating the source
 from CMGTools.Production.datasetToSource import *
@@ -93,14 +95,66 @@ process.load('CMGTools.H2TauTau.h2TauTau_cff')
 
 print sep_line
 from CMGTools.H2TauTau.tools.setupRecoilCorrection import setupRecoilCorrection
-# WARNING DISABLING RECOIL CORRECTIONS FOR 2012!!!
-setupRecoilCorrection( process, runOnMC, True, cmsswIs52X(), 'WJetsToLNu')
+
+recoilEnabled = True
+setupRecoilCorrection( process, runOnMC,
+                       enable=recoilEnabled,
+                       is53X=isNewerThan('CMSSW_5_2_X'),
+                       channel = channel,
+                       mode='WJetsToLNu')
+
+
+# Kinematic reweighting for the embedded samples from here https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonTauReplacementRecHit
+# Can also put this into a separate file under tools
+
+isEmbedded = process.source.fileNames[0].find('embedded') != -1
+
+if isEmbedded:
+    process.load('TauAnalysis.MCEmbeddingTools.embeddingKineReweight_cff')
+
+    if channel == 'all':
+        print 'ERROR: not possible to run all the channels for the embedded samples right now'
+
+    # for "standard" e+tau channel
+    if channel == 'tau-ele':
+        process.embeddingKineReweightRECembedding.inputFileName = cms.FileInPath("TauAnalysis/MCEmbeddingTools/data/embeddingKineReweight_ePtGt20tauPtGt18_recEmbedded.root")
+        process.tauElePath.insert(-1, process.embeddingKineReweightSequenceRECembedding)
+
+    # for e+tau channel of "soft lepton" analysis
+    #embeddingKineReweightRECembedding.inputFileName = cms.FileInPath("TauAnalysis/MCEmbeddingTools/data/embeddingKineReweight_ePt9to30tauPtGt18_recEmbedded.root")
+
+    # for "standard" mu+tau channel
+    if channel == 'tau-mu':
+        process.embeddingKineReweightRECembedding.inputFileName = cms.FileInPath("TauAnalysis/MCEmbeddingTools/data/embeddingKineReweight_muPtGt16tauPtGt18_recEmbedded.root")
+        process.tauMuPath.insert(-1, process.embeddingKineReweightSequenceRECembedding)
+
+    # for mu+tau channel of "soft lepton" analysis
+    #embeddingKineReweightRECembedding.inputFileName = cms.FileInPath("TauAnalysis/MCEmbeddingTools/data/embeddingKineReweight_muPt7to25tauPtGt18_recEmbedded.root")
+
+    # for tautau channel
+    if channel == 'di-tau':
+        process.embeddingKineReweightRECembedding.inputFileName = cms.FileInPath("TauAnalysis/MCEmbeddingTools/data/embeddingKineReweight_tautau_recEmbedded.root")
+        process.diTauPath.insert(-1, process.embeddingKineReweightSequenceRECembedding)
+
+    print "Embedded samples; using kinematic reweighting file:", process.embeddingKineReweightRECembedding.inputFileName
+
+    # for emu, mumu and ee channels
+    #embeddingKineReweightRECembedding.inputFileName = cms.FileInPath("TauAnalysis/MCEmbeddingTools/data/embeddingKineReweight_recEmbedding_emu.root")
+
 
 # OUTPUT definition ----------------------------------------------------------
 process.outpath = cms.EndPath()
 
 # generator ----------------------------------------------
-if not runOnMC:
+if not runOnMC :
+    if not isEmbedded :
+      process.diTauPath.remove( process.cmgDiTauCor )          
+      process.cmgDiTauPtSel.src = cms.InputTag('mvaMETDiTau')   
+      process.tauMuPath.remove( process.cmgTauMuCor )                   ## boh
+      process.cmgTauMuTauPtSel.src = cms.InputTag('mvaMETTauMu')        ## boh    
+      process.tauElePath.remove( process.cmgTauEleCor )                 ## boh
+      process.cmgTauEleTauPtSel.src = cms.InputTag('mvaMETTauEle')      ## boh
+
     process.tauMuPath.remove( process.genSequence )
     process.tauElePath.remove( process.genSequence )
     process.diTauPath.remove( process.genSequence )
@@ -117,6 +171,8 @@ process.cmgMuonSel = cms.EDFilter(
     leptonSrc = cms.InputTag('cmgMuonSel'),
     verbose = cms.untracked.bool( False )
     )
+
+# need to remove the leading jet corresponding to the removed muon
 
 process.cmgPFJetSel =  cms.EDProducer(
     "DeltaRVetoProducerPFJet",
@@ -144,42 +200,6 @@ process.cmgTauSel =  cms.EDProducer(
     verbose = cms.untracked.bool(False)
     )
 
-
-
-## process.pfMetForRegressionCor = cms.EDProducer(
-##     'PFMetModificationProducer',
-##     candSrc = cms.InputTag('cmgMuonSel:removed'),
-##     metSrc = cms.InputTag('pfMetForRegression'),
-##     operator = cms.string('-')
-##     )
-## process.pfMetForRegression = cms.EDProducer(
-##     'PFMetModificationProducer',
-##     candSrc = cms.InputTag('cmgMuonSel:correction'),
-##     metSrc = cms.InputTag('pfMetForRegressionCor'),
-##     operator = cms.string('-')
-##     )
-
-## process.nopuMetCor = process.pfMetForRegressionCor.clone(metSrc='nopuMet')
-## process.nopuMet = process.pfMetForRegression.clone(metSrc='nopuMetCor')
-## process.pcMetCor = process.pfMetForRegressionCor.clone(metSrc='pcMet')
-## process.pcMet = process.pfMetForRegression.clone(metSrc='pcMetCor')
-## process.tkMetCor = process.pfMetForRegressionCor.clone(metSrc='tkMet')
-## process.tkMet = process.pfMetForRegression.clone(metSrc='tkMetCor')
-
-
-## process.pfMetModificationSequence = cms.Sequence(
-##     process.pfMetForRegressionCor +
-##     process.pfMetForRegression +
-##     process.nopuMetCor +
-##     process.nopuMet +
-##     process.pcMetCor +
-##     process.pcMet +
-##     process.tkMetCor +
-##     process.tkMet
-##     )
-
-
-
 process.pfMetForRegression = cms.EDProducer(
     'PFMetModificationProducer',
     candSrc = cms.InputTag('cmgMuonSel:removed'),
@@ -191,6 +211,8 @@ process.nopuMet = process.pfMetForRegression.clone(metSrc='nopuMet')
 process.pcMet = process.pfMetForRegression.clone(metSrc='pcMet')
 process.tkMet = process.pfMetForRegression.clone(metSrc='tkMet')
 
+
+process.mvaMETTauMu.leadJetSrc = 'cmgPFJetSel'
 
 process.pfMetModificationSequence = cms.Sequence(
     process.pfMetForRegression +
@@ -206,9 +228,8 @@ process.muRmSequence = cms.Sequence(
     process.pfMetModificationSequence    
     ) 
 
+process.tauMuPath.insert(0, process.muRmSequence) 
 
-if 1: 
-    process.tauMuPath.insert(0, process.muRmSequence) 
 
 #Jose: process.schedule doesn't have a += operator?
 if channel=='all':
@@ -242,7 +263,9 @@ else:
 print sep_line
 print 'INPUT:'
 print sep_line
-print process.source.fileNames
+pprint.pprint( process.source.fileNames[:5] )
+print '...'
+print 'total number of files =', len(process.source.fileNames) 
 print
 if runOnMC==False:
     print 'json:', json
@@ -251,6 +274,7 @@ print sep_line
 print 'PROCESSING'
 print sep_line
 print 'runOnMC:', runOnMC
+print 'isEmbedded:', isEmbedded
 print 
 print sep_line
 print 'OUPUT:'
@@ -267,9 +291,10 @@ justn = 30
 # process.recoilCorMETTauMu.verbose= True
 
 # systematic shift on tau energy scale 
-process.cmgTauScaler.cfg.nSigma = tauScaling
+process.cmgDiTauCor.cfg.nSigma = tauScaling
 
 from CMGTools.H2TauTau.tools.setupOutput import *
+
 if channel=='tau-mu' or channel=='all':
     addTauMuOutput( process, debugEventContent, addPreSel=False)
 if channel=='tau-ele' or channel=='all':
@@ -335,14 +360,29 @@ if useCHS:
 if newSVFit:
     process.cmgTauMuCorSVFitPreSel.SVFitVersion = 2
     process.cmgTauEleCorSVFitPreSel.SVFitVersion = 2
-    process.cmgDiTauSVFit.SVFitVersion = 2
+    process.cmgDiTauCorSVFitPreSel.SVFitVersion = 2
 else:
     process.cmgTauMuCorSVFitPreSel.SVFitVersion = 1
     process.cmgTauEleCorSVFitPreSel.SVFitVersion = 1
-    process.cmgDiTauSVFit.SVFitVersion = 1
+    process.cmgDiTauCorSVFitPreSel.SVFitVersion = 1
 
 # process.tauMu_fullsel_tree_CMG.SelectEvents = cms.untracked.PSet()
 
-process.cmgTauMu.cuts.baseline.tauLeg.iso = cms.string('leg1().tauID("byRawIsoMVA") > -9999')
+# process.cmgTauMu.cuts.baseline.tauLeg.iso = cms.string('leg1().tauID("byRawIsoMVA") > 0.5')
+# process.cmgTauMu.cuts.baseline.tauLeg.iso = cms.string('leg1().tauID("byRawIsoMVA") > -9999')
+# process.cmgTauMu.cuts.baseline.tauLeg.iso = cms.string('leg1().tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.')
+
+process.cmgTauMu.cuts.baseline.tauLeg.kinematics.pt = cms.string('leg1().pt() > 30.')
+
+
+# process.cmgDiTau.cuts.baseline.tau1Leg.iso = cms.string('leg1().tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.')
+# process.cmgDiTau.cuts.baseline.tau2Leg.iso = cms.string('leg2().tauID("byCombinedIsolationDeltaBetaCorrRaw3Hits") < 10.')
+# process.cmgDiTau.cuts.baseline.tau1Leg.kinematics.pt  = cms.string('leg1().pt()>35.')
+# process.cmgDiTau.cuts.baseline.tau2Leg.kinematics.pt  = cms.string('leg2().pt()>35.')
+# process.cmgDiTau.cuts.baseline.tau1Leg.kinematics.eta = cms.string('abs(leg1().eta())<2.1')
+# process.cmgDiTau.cuts.baseline.tau2Leg.kinematics.eta = cms.string('abs(leg2().eta())<2.1')
+
+
+
 
 

@@ -1,6 +1,7 @@
 import copy
 import os
 import CMGTools.RootTools.fwlite.Config as cfg
+from   CMGTools.H2TauTau.proto.samples.getFiles import getFiles
 
 H2TauTauPackage = '/'.join( [ os.environ['CMSSW_BASE'],
                               'src/CMGTools/H2TauTau' ] ) 
