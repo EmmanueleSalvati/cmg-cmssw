@@ -128,19 +128,16 @@ class CMSDataset( BaseDataset ):
         print 'buildListOfFilesDBS',begin,end
         sampleName = self.name.rstrip('/')
         query = sampleName
-        if self.run_range is not None and self.run_range != (-1,-1):
-            if self.run_range[0] == self.run_range[1]:
-                query += "   run=%s" % self.run_range[0]
-            else:
-                print "WARNING: queries with run ranges are slow in DAS"
-                query += "   run between [%s,%s]" % ( self.run_range[0],self.run_range[1] )
-        dbs='das_client.py --query="file dataset=%s"'%query
+        if self.run_range is not None:
+            if self.run_range[0] > 0:
+                query = "%s and run >= %i" % (query,self.run_range[0])
+            if self.run_range[1] > 0:
+                query = "%s and run <= %i" % (query,self.run_range[1])
+        dbs='dbs search --query="find file where dataset like %s"'%query
         if begin >= 0:
-            dbs += ' --index %d' % begin
+            dbs += ' --begin %d' % begin
         if end >= 0:
-            dbs += ' --limit %d' % (end-begin+1)
-        else:
-            dbs += ' --limit 0' 
+            dbs += ' --end %d' % end
         print 'dbs\t: %s' % dbs
         dbsOut = os.popen(dbs)
         files = []
@@ -174,20 +171,21 @@ class CMSDataset( BaseDataset ):
     def findPrimaryDatasetEntries(dataset, runmin, runmax):
 
         query = dataset
-        if runmin >0 or runmax > 0:
-            if runmin == runmax:
-                query = "%s run=%d" % (query,runmin)
-            else:
-                print "WARNING: queries with run ranges are slow in DAS"
-                query = "%s run between [%d, %d]" % (query,runmin if runmin > 0 else 1, runmax if runmax > 0 else 999999)
-        dbs='das_client.py --query="summary dataset=%s"'%query
+        if runmin > 0:
+            query = "%s and run >= %i" % (query,runmin)
+        if runmax > 0:
+            query = "%s and run <= %i" % (query,runmax)
+        dbs='dbs search --query="find sum(file.numevents) where dataset like %s"'%query
         dbsOut = os.popen(dbs).readlines()
 
         entries = []
         for line in dbsOut:
             line = line.replace('\n','')
-            if "nevents" in line:
-                entries.append(int(line.split(":")[1]))
+            if line:
+                try:
+                    entries.append(int(line))
+                except ValueError:
+                    pass
         if entries:
             return sum(entries)
         return -1
@@ -196,20 +194,21 @@ class CMSDataset( BaseDataset ):
     def findPrimaryDatasetNumFiles(dataset, runmin, runmax):
 
         query = dataset
-        if runmin >0 or runmax > 0:
-            if runmin == runmax:
-                query = "%s run=%d" % (query,runmin)
-            else:
-                print "WARNING: queries with run ranges are slow in DAS"
-                query = "%s run between [%d, %d]" % (query,runmin if runmin > 0 else 1, runmax if runmax > 0 else 999999)
-        dbs='das_client.py --query="summary dataset=%s"'%query
+        if runmin > 0:
+            query = "%s and run >= %i" % (query,runmin)
+        if runmax > 0:
+            query = "%s and run <= %i" % (query,runmax)
+        dbs = 'dbs search --query="find sum(block.numfiles) where dataset like %s"' % query
         dbsOut = os.popen(dbs).readlines()
 
         entries = []
         for line in dbsOut:
             line = line.replace('\n','')
-            if "nfiles" in line:
-                entries.append(int(line.split(":")[1]))
+            if line:
+                try:
+                    entries.append(int(line))
+                except ValueError:
+                    pass
         if entries:
             return sum(entries)
         return -1

@@ -1,6 +1,5 @@
 import FWCore.ParameterSet.Config as cms
 import sys
-from CMGTools.Common.Tools.cmsswRelease import isNewerThan
 
 #in this file, we run the various filters and store the results
 # lucie - 26 / 07 / 2013, checked against https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFilters rev 62
@@ -63,17 +62,14 @@ from RecoMET.METAnalyzers.CSCHaloFilter_cfi import CSCTightHaloFilter
 CSCTightHaloFilterPath = cms.Path(CSCTightHaloFilter)
 
 ## The HCAL laser filter
-from EventFilter.HcalRawToDigi.hcallasereventfilter2012_cfi import hcallasereventfilter2012
-hcalLaserEventFilterPath = cms.Path(hcallasereventfilter2012)
+from RecoMET.METFilters.hcalLaserEventFilter_cfi import hcalLaserEventFilter
+hcalLaserEventFilterPath = cms.Path(hcalLaserEventFilter)
 
 ## The ECAL dead cell trigger primitive filter
 from RecoMET.METFilters.EcalDeadCellTriggerPrimitiveFilter_cfi import EcalDeadCellTriggerPrimitiveFilter
 ## For AOD and RECO recommendation to use recovered rechits
 EcalDeadCellTriggerPrimitiveFilter.tpDigiCollection = cms.InputTag("ecalTPSkimNA")
 EcalDeadCellTriggerPrimitiveFilterPath = cms.Path(EcalDeadCellTriggerPrimitiveFilter)
-
-from RecoMET.METFilters.EcalDeadCellBoundaryEnergyFilter_cfi import EcalDeadCellBoundaryEnergyFilter
-EcalDeadCellBoundaryEnergyFilterPath = cms.Path(EcalDeadCellBoundaryEnergyFilter)
 
 
 ## The Good vertices collection needed by the tracking failure filter
@@ -95,7 +91,7 @@ metNoiseCleaning = cms.Sequence(primaryVertexFilter+
                                 noscraping+
                                 CSCTightHaloFilter+
                                 HBHENoiseFilter+
-                                hcallasereventfilter2012 +
+                                hcalLaserEventFilter+
                                 EcalDeadCellTriggerPrimitiveFilter+
                                 trackingFailureSequence
                                 # eeBadScSequence+
@@ -104,7 +100,11 @@ metNoiseCleaning = cms.Sequence(primaryVertexFilter+
 
 metNoiseCleaningPath = cms.Path(metNoiseCleaning)
 
+from CMGTools.Common.Tools.cmsswRelease import isNewerThan
 if isNewerThan('CMSSW_5_2_0'):
+    #the HCal noise filter works on AOD in 5.2. in 44, a list of events was used.
+    hcalLaserEventFilter.vetoByRunEventNumber=cms.untracked.bool(False)
+    hcalLaserEventFilter.vetoByHBHEOccupancy=cms.untracked.bool(True)
     #the ee bad sc filter is only available in 5X 
     ## Bad EE Supercrystal filter
     from RecoMET.METFilters.eeBadScFilter_cfi import eeBadScFilter
@@ -122,8 +122,11 @@ if isNewerThan('CMSSW_5_3_0'):
     from RecoMET.METFilters.trackingPOGFilters_cfi import *
     trkPOGFiltersSequence = cms.Sequence(~manystripclus53X * ~toomanystripclus53X * ~logErrorTooManyClusters)
     trkPOGFiltersPath = cms.Path(trkPOGFiltersSequence)
+    #further cleaning of hcal laser events filtering based on txt file, since digi info not available in AOD (twiki confusing...)
+    from EventFilter.HcalRawToDigi.hcallasereventfilter2012_cfi import hcallasereventfilter2012 # for prompt reco
+    metNoiseCleaning += hcallasereventfilter2012
     from EventFilter.HcalRawToDigi.hcallaserFilterFromTriggerResult_cff import hcalfilter # for re-reco and parked
     metNoiseCleaning += hcalfilter
-    hcalLaserEventFilterPath += hcalfilter
+    
 else:
     print >> sys.stderr, 'trkPOGFilters only available in releases >= 5.3'

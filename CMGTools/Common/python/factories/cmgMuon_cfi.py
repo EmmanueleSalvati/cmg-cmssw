@@ -14,10 +14,11 @@ from CMGTools.Common.selections.muonIDs_cfi import *
 cmgMuon = cms.EDFilter("MuonPOProducer",
     cfg = muonFactory.clone(),
     cuts = cms.PSet(
-                #loosemuon = loosemuon.clone(),
-                #softmuonNoVtx = softmuonNoVtx.clone(),
-                #tightmuonNoVtx = tightmuonNoVtx.clone(),
-                #highptmuonNoVtx = highptmuonNoVtx.clone(),
-                #vbtfmuon = vbtfmuon.clone(),
+                
+                loosemuon = loosemuon.clone(),
+                softmuonNoVtx = softmuonNoVtx.clone(),
+                tightmuonNoVtx = tightmuonNoVtx.clone(),
+                highptmuonNoVtx = highptmuonNoVtx.clone(),
+                vbtfmuon = vbtfmuon.clone(),
          )    
 )

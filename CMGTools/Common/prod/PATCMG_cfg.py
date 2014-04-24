@@ -22,7 +22,6 @@ from CMGTools.Production.datasetToSource import *
 datasetInfo = (
     'cmgtools_group',
     '/VBF_HToTauTau_M-125_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM/V5_B',
-    #FASTSIM'/SMS-T2tt_mStop-675to800_mLSP-0to275_8TeV-Pythia6Z/Summer12-START52_V9_FSIM-v1/AODSIM/V5_B/',
     # 'CMS',
     # '/DoubleMu/Run2012A-22Jan2013-v1/AOD',
     '.*root')
@@ -32,8 +31,6 @@ process.source = datasetToSource(
 
 #process.source.fileNames = process.source.fileNames[:20]
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-#process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
-
 
 ###ProductionTaskHook$$$
 
@@ -55,10 +52,7 @@ if runOnMC is False:
 
     process.patElectrons.addGenMatch = False
     process.makePatElectrons.remove( process.electronMatch )
-   
-    process.patElectronsWithCalibrations.isMC = False
-    process.patElectronsWithCalibrations.inputDataset = "22Jan2013ReReco"
- 
+    
     process.patMuons.addGenMatch = False
     process.makePatMuons.remove( process.muonMatch )
     
@@ -114,7 +108,6 @@ process.patJetCorrFactorsCHS.payload = jecPayload
 process.puJetIdCHS.jec = jecPayload
 process.cmgPUJetMvaCHS.jec = jecPayload
 process.selectedPatJetsCHS.cut = 'pt()>10'
-process.QGTaggerCHS.useCHS = True
 
 
 ########################################################
@@ -123,18 +116,18 @@ process.QGTaggerCHS.useCHS = True
 
 process.dump = cms.EDAnalyzer('EventContentAnalyzer')
 
-process.load('CMGTools.Common.PAT.addFilterPaths_cff')
+##CGIT process.load('CMGTools.Common.PAT.addFilterPaths_cff')
 process.p = cms.Path(
     process.prePathCounter + 
     process.PATCMGSequence +
     process.PATCMGJetCHSSequence 
     )
 
-if 'Prompt' in datasetInfo[1] or runOnMC :
-    process.metNoiseCleaning.remove(process.hcalfilter)
-    process.hcalLaserEventFilterPath.remove(process.hcalfilter)
-if ('Parked' in datasetInfo[1]) or ('22Jan2013' in datasetInfo[1]) :
-    process.metNoiseCleaning.remove(process.hcallasereventfilter2012)
+##CGIT
+## if 'Prompt' in datasetInfo[1] or runOnMC :
+##    process.metNoiseCleaning.remove(process.hcalfilter)
+## if ('Parked' in datasetInfo[1]) or ('22Jan2013' in datasetInfo[1]) :
+##    process.metNoiseCleaning.remove(process.hcallasereventfilter2012)
 
 process.p += process.postPathCounter
 
@@ -156,6 +149,24 @@ process.p += process.postPathCounter
 # process.p.remove(process.MetSignificanceSequence)
 # process.p.remove(process.PATCMGMetRegressionSequence)
 # process.p.remove(process.PATCMGJetSequenceCHSpruned)
+
+if runOnFastSim :
+    process.vertexWeightSequence.remove(process.vertexWeight3DMay10ReReco)
+    process.vertexWeightSequence.remove(process.vertexWeight3DMay10ReReco)
+    process.vertexWeightSequence.remove(process.vertexWeight3DPromptRecov4)
+    process.vertexWeightSequence.remove(process.vertexWeight3D05AugReReco)
+    process.vertexWeightSequence.remove(process.vertexWeight3DPromptRecov6)
+    process.vertexWeightSequence.remove(process.vertexWeight3D2invfb)
+    process.vertexWeightSequence.remove(process.vertexWeight3D2011B)
+    process.vertexWeightSequence.remove(process.vertexWeight3D2011AB)
+    process.vertexWeightSequence.remove(process.vertexWeight3DFall11May10ReReco)
+    process.vertexWeightSequence.remove(process.vertexWeight3DFall11PromptRecov4)
+    process.vertexWeightSequence.remove(process.vertexWeight3DFall1105AugReReco)
+    process.vertexWeightSequence.remove(process.vertexWeight3DFall11PromptRecov6)
+    process.vertexWeightSequence.remove(process.vertexWeight3DFall112invfb)
+    process.vertexWeightSequence.remove(process.vertexWeight3DFall112011B)
+    process.vertexWeightSequence.remove(process.vertexWeight3DFall112011AB)
+
 
 ########################################################
 ## PAT output definition
@@ -195,16 +206,9 @@ process.outcmg = cms.OutputModule(
     )
 
 process.outpath += process.outcmg
-# These commands below will select the 'light' version of the CMG tuple:
-#  - 16bit PF Candidates
-#  - TriggerPrescales instead of fat single TriggerObject
-#  - slimmed PVs (without track references)
-process.outcmg.outputCommands.append('keep cmgPackedCandidates_cmgCandidates_*_*') 
-process.outcmg.outputCommands.append('drop cmgCandidates_cmgCandidates_*_*') 
-process.outcmg.outputCommands.append('keep *_cmgTriggerPrescales_*_*') 
-process.outcmg.outputCommands.append('drop *_cmgTriggerObjectSel_*_*') 
-process.outcmg.outputCommands.append('drop *_offlinePrimaryVertices_*_*') 
-process.outcmg.outputCommands.append('keep *_slimmedPrimaryVertices_*_*') 
+
+
+
 
 ########################################################
 ## Conditions 
@@ -221,23 +225,24 @@ process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 
 
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
-from CMGTools.Common.PAT.patCMGSchedule_cff import getSchedule
-process.schedule = getSchedule(process, runOnMC, runOnFastSim)
+
+##CGIT
+## from CMGTools.Common.PAT.patCMGSchedule_cff import getSchedule
+## process.schedule = getSchedule(process, runOnMC, runOnFastSim)
+process.schedule = cms.Schedule( process.p)
 
 process.schedule.append( process.outpath )
 
 ## MessageLogger
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 10
-process.MessageLogger.suppressWarning = cms.untracked.vstring('ecalLaserCorrFilter','manystripclus53X','toomanystripclus53X')
+process.MessageLogger.suppressWarning = cms.untracked.vstring('ecalLaserCorrFilter')
 ## Options and Output Report
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 
 
 if not runOnMC and isNewerThan('CMSSW_5_2_0'):
     process.pfJetMETcorr.jetCorrLabel = cms.string("ak5PFL1FastL2L3Residual")
-if runOnFastSim:
-    process.patElectronsWithRegression.rhoCollection = cms.InputTag("kt6PFJets","rho","HLT")
 
 
 ## Last minute fixes

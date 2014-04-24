@@ -10,18 +10,19 @@ from CMGTools.Production.castorBaseDir import getUserAndArea
 from CMGTools.Production.datasetInformation import DatasetInformation
 
 
-def publish(sampleName,fileown,comment,test,username,force,
-            primary, run_range = None, development = False ):
+def publish(sampleName,fileown,comment,test,user,password, force,
+            savannah,primary, run_range = None, development = False ):
     """Publish the given dataset to CMGDB and Savannah
 
     'sampleName' takes the name of the dataset, in either format
     'fileown' takes the NICE username of the space on EOS in
     which the dataset resides
     'comment' takes a users comment for publishing to Savannah or None
-    'username' takes the name of the user publishing the dataset
     'test' takes True/False on whether the posting is a test or not
-    'development' takes True/False depending on whether
-    wants to publish on the official or the devdb11 database
+    'user' takes the NICE username of the person making the post
+    'password' takes the NICE password of the person making the post
+    'savannah' takes True/False on whether Savannah publish is desired
+    'development'
     """
 
     def checkName(sampleName, fileown):
@@ -52,7 +53,27 @@ def publish(sampleName,fileown,comment,test,username,force,
         print sampleName+"\n"
 
         # Initialise PublishController
-        publishController = PublishController(username,development)
+        publishController = PublishController(user, 
+                                              password, 
+                                              development)
+
+        # Attempt Login, if unexplained fail occurs, retry
+        loginClear = False
+        try:
+            loginClear = publishController.loginValid()
+        except KeyboardInterrupt:
+            raise
+        except:
+            try:
+                loginClear = publishController.loginValid()
+            except KeyboardInterrupt:
+                raise
+
+        # If login fails return None
+        if loginClear is False:
+            print "User authentication failed, exiting!\n\n"
+            return None
+
 
         # Get DS Information
         datasetDetails = DatasetInformation(sampleName, 
@@ -61,6 +82,8 @@ def publish(sampleName,fileown,comment,test,username,force,
                                             force,
                                             test,
                                             primary, 
+                                            user,
+                                            password, 
                                             development)
 
         # Build all reports on the dataset
@@ -74,6 +97,15 @@ def publish(sampleName,fileown,comment,test,username,force,
         print datasetDetails.createDirectoryDetailString()
         for group_name in datasetDetails.dataset_details['FileGroups']:
             print datasetDetails.createFileGroupDetailString(group_name)
+
+        ## Savannah operations
+        print "\n------Savanah------\n"
+
+        if savannah or datasetDetails.dataset_details['TaskID'] == None:
+            (datasetDetails.dataset_details['TaskID'],
+             datasetDetails.dataset_details['ParentTaskID']) = publishController.savannahPublish(datasetDetails.dataset_details)
+        else:
+            print "NO SAVANNAH PUBLISH REQUIRED"
 
         if datasetDetails.dataset_details['TaskID'] is not None:
             status = 'Success'

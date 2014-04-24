@@ -10,13 +10,6 @@ from CMGTools.Common.analysis_cff import *
 # FIXME : adapt pile-up jet id to 44X
 
 
-# SERVICES         ---------------------------
-RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
-    patElectronsWithCalibrations = cms.PSet(
-        initialSeed = cms.untracked.uint32( 1041963)
-    )
-)
-
 # GEN              ---------------------------
 
 from CMGTools.Common.PAT.PATGenJet_cff import * 
@@ -67,8 +60,7 @@ PATCMGPileUpSubtractionSequence = cms.Sequence(
 # RHO's            ----------------------------
 
 from CMGTools.Common.PAT.rho_cff import *
-from QuarkGluonTagger.EightTeV.QGTagger_RecoJets_cff import kt6PFJetsIsoQG 
-PATCMGRhoSequence = rhoSequence + kt6PFJetsIsoQG
+PATCMGRhoSequence = rhoSequence
 
 
 # MUONS           ----------------------------
@@ -209,7 +201,6 @@ PATCMGCandidatesSequence = cms.Sequence(
     cmgCandidates
     )
 
-from CMGTools.Common.miscProducers.slimmedPrimaryVertices_cfi import slimmedPrimaryVertices
 ####  FULL SEQUENCE  ####
 
 # NOTE: object sequences are defined so that they can be easily removed from the path
@@ -229,8 +220,7 @@ PATCMGSequence = cms.Sequence(
     PATCMGMetSequence +
     MetSignificanceSequence +
     PATCMGMetRegressionSequence +
-    PATCMGCandidatesSequence +
-    slimmedPrimaryVertices
+    PATCMGCandidatesSequence
     )
 
 #if isNewerThan('CMSSW_5_2_0'):

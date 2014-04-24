@@ -45,7 +45,6 @@ class PileUpAnalyzer( Analyzer ):
         if (hasattr(self.cfg_ana,'makeHists')) and (not self.cfg_ana.makeHists):
             self.doHists=False
 
-        self.allVertices = self.cfg_ana.allVertices if (hasattr(self.cfg_ana,'allVertices')) else "offlinePrimaryVertices"
 
         if self.cfg_comp.isMC and self.doHists:
             self.rawmcpileup = VertexHistograms('/'.join([self.dirName,
@@ -85,7 +84,7 @@ class PileUpAnalyzer( Analyzer ):
             'std::vector<PileupSummaryInfo>' 
             ) 
         self.handles['vertices'] =  AutoHandle(
-            self.allVertices,
+            'offlinePrimaryVertices',
             'std::vector<reco::Vertex>' 
             ) 
 

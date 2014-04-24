@@ -6,7 +6,6 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 
 #include "AnalysisDataFormats/CMGTools/interface/Candidate.h"
-#include "AnalysisDataFormats/CMGTools/interface/PackedCandidate.h"
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
@@ -17,10 +16,6 @@
 #include <DataFormats/MuonReco/interface/Muon.h>
 #include <DataFormats/GsfTrackReco/interface/GsfTrack.h>
 
-namespace {
-    struct ChargedFirst { bool operator()(const reco::Candidate &c1, const reco::Candidate &c2) const { return abs(c1.charge()) > abs(c2.charge()); } };
-}
-
 using namespace std;
 using namespace edm;
 
@@ -29,7 +24,6 @@ CMGCandidateProducer::CMGCandidateProducer(const edm::ParameterSet& iConfig) {
   Cands_ = iConfig.getParameter<InputTag>("inputCollection");
   CandsFromPV_ = iConfig.getParameter<InputTag>("inputCollectionFromPV");
   produces< std::vector<cmg::Candidate> > ();
-  produces< std::vector<cmg::PackedCandidate> > ();
 
 }
 
@@ -49,7 +43,6 @@ void CMGCandidateProducer::produce(Event& iEvent,
   std::vector<reco::Candidate>::const_iterator candFromPV;
 
   auto_ptr< std::vector<cmg::Candidate> > outPtr( new std::vector<cmg::Candidate> );
-  auto_ptr< std::vector<cmg::PackedCandidate> > outPtrP( new std::vector<cmg::PackedCandidate> );
   for(unsigned int ic=0; ic<cands->size(); ic++) {
     const reco::Candidate &cand=(*cands)[ic];
     bool fromPV=false;
@@ -72,14 +65,12 @@ void CMGCandidateProducer::produce(Event& iEvent,
 				      cand.pdgId(),
 				      fromPV)
 		       );  
-    outPtrP->push_back( cmg::PackedCandidate(cand.polarP4(), (cand.charge() ? vtx : math::XYZPoint()), cand.pdgId(), fromPV));
-
     }
-  std::sort(outPtrP->begin(), outPtrP->end(), ChargedFirst());
+  
+
 
   
   iEvent.put( outPtr  );
-  iEvent.put( outPtrP );
 }
 
 

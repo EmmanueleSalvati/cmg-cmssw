@@ -33,30 +33,10 @@ ak5JetTracksAssociatorAtVertex.jets = jetSource
 from RecoBTag.Configuration.RecoBTag_cff import * # btagging sequence
 softPFMuonsTagInfos.jets = jetSource
 softPFElectronsTagInfos.jets = jetSource
-btaggingExt = cms.Sequence(
-        btagging
-        + softPFElectronByIP3dBJetTags 
-        + softPFElectronByPtBJetTags  
-        + softPFMuonByPtBJetTags  
-)
 
-patJets.discriminatorSources = [
-    cms.InputTag("combinedSecondaryVertexBJetTags"),
-    cms.InputTag("trackCountingHighEffBJetTags"),
-    cms.InputTag("trackCountingHighPurBJetTags"),
-    cms.InputTag("jetProbabilityBJetTags"),
-    cms.InputTag("jetBProbabilityBJetTags"),
-    cms.InputTag("simpleSecondaryVertexHighEffBJetTags"),
-    cms.InputTag("simpleSecondaryVertexHighPurBJetTags"),
-    cms.InputTag("combinedSecondaryVertexBJetTags"),
-    cms.InputTag("combinedSecondaryVertexMVABJetTags"),
-    cms.InputTag("ghostTrackBJetTags"),
-    cms.InputTag("softPFMuonBJetTags"),
-    cms.InputTag("softPFElectronBJetTags"),
-    cms.InputTag("softPFElectronByIP3dBJetTags"), 
-    cms.InputTag("softPFElectronByPtBJetTags"),  
-    cms.InputTag("softPFMuonByPtBJetTags"),  
-]
+##CGIT: some taggers are missing in the btagging sequence.
+## so leaving only one tagger in for now.
+patJets.discriminatorSources = [cms.InputTag("combinedSecondaryVertexBJetTags")]
 
 from CMGTools.Common.Tools.cmsswRelease import isNewerThan
 from CMGTools.Common.skims.cmgCandSel_cfi import cmgCandSel
@@ -96,22 +76,12 @@ jetsPtGt1 = cmgCandSel.clone( src = 'patJets', cut = jetsPtGt1Cut )
 from CMGTools.Common.miscProducers.collectionSize.candidateSize_cfi import candidateSize
 nJetsPtGt1 = candidateSize.clone( src = 'jetsPtGt1' )
 
-# QG Tagger
-QGTagger = cms.EDProducer('QGTagger',
-  srcJets   = cms.InputTag('selectedPatJets'),
-  isPatJet  = cms.untracked.bool(True),
-  useCHS    = cms.untracked.bool(False),
-  srcRho    = cms.InputTag('kt6PFJets','rho'),
-  srcRhoIso = cms.InputTag('kt6PFJetsIsoQG','rho'),
-)
-
 # jet extender
 patJetsWithVar = cms.EDProducer('JetExtendedProducer',
     jets     = cms.InputTag('selectedPatJets'),
     vertices = cms.InputTag('goodOfflinePrimaryVertices'),
     #debug   = cms.untracked.bool(True),
-    payload  = cms.string('AK5PF'),
-    qgtagPOG = cms.InputTag('QGTagger'),    
+    payload  = cms.string('AK5PF')
 )
 
 outPFCand = cms.EDProducer('VbfHbbPFCandOutOfJets',
@@ -133,19 +103,17 @@ jetMCSequence = cms.Sequence(
     patJetGenJetMatch
     )
 
-
 PATJetSequence = cms.Sequence(
     ak5PFJetsSel + 
     jetMCSequence +
     ak5JetTracksAssociatorAtVertex + 
-    btaggingExt + 
+    btagging + 
     patJetCorrFactors +
     patJetFlavourId +
     patJets +
     jetsPtGt1 +
     nJetsPtGt1 + 
     selectedPatJets +
-    QGTagger +
     patJetsWithVar +
     puJetId +
     outPFCand +

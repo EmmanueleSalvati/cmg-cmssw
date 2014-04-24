@@ -48,6 +48,9 @@ if __name__ == '__main__':
     for t in tasks:
         addOptionFromTask(t)
                 
+    #sigh! treat write savannah differently
+    sav = WriteSavannah(dataset,user,options)
+    addOptionFromTask(sav)
     #get the options
     try:
         op.run({})
@@ -94,7 +97,7 @@ if __name__ == '__main__':
         return result
     
     #these tasks are quick and are done in the main thread (fail early...)
-    simple_tasks = [CheckDatasetExists(dataset,user,options),FindOnCastor(dataset,user,options)]
+    simple_tasks = [CheckDatasetExists(dataset,user,options),FindOnCastor(dataset,user,options),sav]
     for d in op.dataset:
         for t in simple_tasks:
             t.options = copy.deepcopy(op.options)
