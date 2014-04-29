@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """This module checks if there are missing files, simply by looking
 at the file numbers. It requires a txt file with the list of

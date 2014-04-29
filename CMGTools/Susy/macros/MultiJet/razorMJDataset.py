@@ -18,7 +18,7 @@ def listDirectory(dir, inputFiles, maxFiles):
     return len(files)
 
 def getFiles(datasets, user, pattern):
-    
+
     from CMGTools.Production.datasetToSource import datasetToSource
 
     files = []
@@ -49,7 +49,7 @@ def mt(j, met):
 def mct(calc, h1, h2):
     v1 = array.array('d')
     v2 = array.array('d')
-    
+
     v1.extend([h1.E(),h1.Px(),h1.Py(),h1.Pz()])
     v2.extend([h2.E(),h2.Px(),h2.Py(),h2.Pz()])
 
@@ -58,8 +58,8 @@ def mct(calc, h1, h2):
 if __name__ == '__main__':
 
     skimEvents = False
-    
-    # https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideAboutPythonConfigFile#VarParsing_Example
+
+    # https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideAboutPythonConfigFile#VarParsing_Example
     from FWCore.ParameterSet.VarParsing import VarParsing
     options = VarParsing ('python')
     options.outputFile = None
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     runOnMC = options.runOnMC
     mLSPskim = float(options.mLSP)
     #mStopSkim = float(options.mStop)
-    
+
     runSMS = False
     if options.datasetName:
         runSMS = 'SMS' in options.datasetName
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     if not options.inputFiles:
         if options.inputDirectory is not None:
             listDirectory(options.inputDirectory, options.inputFiles, options.maxFiles)
-        
+
         if True:
             names = [f for f in options.datasetName.split('/') if f]
             if runOnMC:
@@ -132,14 +132,14 @@ if __name__ == '__main__':
             else:
                 name = '%s-%s-%s_%d.root' % (names[0],names[1],names[-1],options.index)
             options.outputFile = os.path.join(options.outputDirectory,name)
-        
+
         files = getFiles(
             [options.datasetName],
             'lucieg',
-           # 'susy_tree_CMG_[0-9]+_[0-9]+.root'                
-            'susy_tree_[0-9]+.root'                
+           # 'susy_tree_CMG_[0-9]+_[0-9]+.root'
+            'susy_tree_[0-9]+.root'
             )
-       
+
        # files=files[:10]
        # files = ['susy_tree_2_.root']
         if options.maxFiles > 0:
@@ -160,7 +160,7 @@ if __name__ == '__main__':
                 chunk = []
         if chunk:
             chunks.append(chunk)
-        
+
         options.clearList('inputFiles')
         options.inputFiles = chunks[options.index]
         print 'Created %d chunks of length %s' % (len(chunks),options.maxFiles),options.index,[len(c) for c in chunks],len(chunks[options.index]),len(options.inputFiles)
@@ -213,7 +213,7 @@ struct Variables{\
     Double_t MCT;\
     Double_t MEFF;\
 };""")
-    
+
     rt.gROOT.ProcessLine("""
 struct Info{\
     Int_t event;\
@@ -244,7 +244,7 @@ struct Info{\
     Int_t BOX_NUM_GEN;\
     Int_t bestHemi;\
 };""")
-    
+
     rt.gROOT.ProcessLine("""
 struct Filters{\
     Bool_t hadBoxFilter;\
@@ -263,7 +263,7 @@ struct Filters{\
     top_dir = os.path.join(os.environ['CMSSW_BASE'],'src/CMGTools/Susy/macros/MultiJet')
     rt.gROOT.ProcessLine(".L %s/calcVariables.C+" % top_dir)
     rt.gROOT.ProcessLine(".L %s/StopReweight.C+" % top_dir)
-          
+
     #see http://mctlib.hepforge.org/
     rt.gROOT.ProcessLine(".L %s/mctlib.C+" % top_dir)
 
@@ -278,11 +278,11 @@ struct Filters{\
         for branch in dir(obj):
             if branch.startswith('__'): continue
             tree.Branch(branch,rt.AddressOf(obj,branch),'%s/%s' % (branch,flag) )
-    
+
     filters = Filters()
     info = Info()
     vars = Variables()
-    
+
     setAddress(filters,'O')
     setAddress(info,'I')
     setAddress(vars,'D')
@@ -326,8 +326,8 @@ struct Filters{\
     tree.Branch('muTight_pt',muTight_pt)
     muTight_eta = std.vector('double')()
     tree.Branch('muTight_eta',muTight_eta)
-  
-   
+
+
     eleLoose_pt = std.vector('double')()
     tree.Branch('eleLoose_pt',eleLoose_pt)
     eleLoose_eta = std.vector('double')()
@@ -357,17 +357,17 @@ struct Filters{\
     candH = Handle("std::vector<reco::LeafCandidate>")
     vertexH = Handle("std::vector<reco::Vertex>")
     genH    = Handle("std::vector<reco::GenParticle>")
-    
+
     electronH = Handle("std::vector<cmg::Electron>")
     muonH = Handle("std::vector<cmg::Muon>")
     tauH = Handle("std::vector<cmg::Tau>")
-    
+
     triggerH = Handle('std::vector<cmg::TriggerObject>')
     countH = Handle('int')
     filterH = Handle('int')
     pileUpH = Handle('double')
     doubleH = Handle('std::vector<double>')
-    
+
     pathTriggerH = Handle("edm::TriggerResults")
     lheH = Handle('LHEEventProduct')
 
@@ -386,7 +386,7 @@ struct Filters{\
     # loop over events
     nEvents = 0
     countThetaH = 0
-       
+
     #print 'nevents',events.numEntries()
     for event in events:
         print 'event', nEvents
@@ -400,7 +400,7 @@ struct Filters{\
 
         CTEQ66_W.clear()
         MRST2006NNLO_W.clear()
-        
+
         jet_pt.clear()
         jet_eta.clear()
         jet_phi.clear()
@@ -418,19 +418,19 @@ struct Filters{\
         muLoose_eta.clear()
         muTight_pt.clear()
         muTight_eta.clear()
-       
+
         eleLoose_pt.clear()
         eleLoose_eta.clear()
         eleTight_pt.clear()
         eleTight_eta.clear()
-       
+
 
         vars.pileUpWeight = 1.0
 
         if (count % 1000) == 0:
             print count,'run/lumi/event',info.run,info.lumi,info.event
             tree.AutoSave()
-        count += 1    
+        count += 1
 
         #get the LHE product info
         vars.mStop = -1
@@ -467,7 +467,7 @@ struct Filters{\
         filters.hadBoxFilter = pathTrigger.accept(pathTriggerNames.triggerIndex('razorMJSkimSequenceHadPath'))
         filters.eleBoxFilter = pathTrigger.accept(pathTriggerNames.triggerIndex('razorMJSkimSequenceElePath'))
         filters.muBoxFilter = pathTrigger.accept(pathTriggerNames.triggerIndex('razorMJSkimSequenceMuPath'))
-        path = filters.hadBoxFilter or filters.muBoxFilter or filters.eleBoxFilter 
+        path = filters.hadBoxFilter or filters.muBoxFilter or filters.eleBoxFilter
         if skimEvents and not path:
             print 'continue - skimEvents and not path'
             continue
@@ -480,7 +480,7 @@ struct Filters{\
             filters.metFilter = pathTrigger.accept(pathTriggerNames.triggerIndex('metNoiseCleaningPath'))
         else:
             filters.metFilter = pathTrigger.accept(pathTriggerNames.triggerIndex('metNoiseCleaningPath')) and pathTrigger.accept(pathTriggerNames.triggerIndex('trkPOGFiltersPath'))
-                        
+
         event.getByLabel(('razorMJDiHemiHadBoxUp'),hemiHadH)
         if hemiHadH.isValid() and len(hemiHadH.product()):
             hemi = hemiHadH.product()[0]
@@ -492,7 +492,7 @@ struct Filters{\
             hemi = hemiHadH.product()[0]
             vars.RSQ_JES_DOWN = hemi.Rsq()
             vars.MR_JES_DOWN = hemi.mR()
-        
+
         #the number of lepton cleaned jets
         jet_param_veto = []
         event.getByLabel(('razorMJJetCleanedLoose'),jetSelCleanedH)
@@ -500,7 +500,7 @@ struct Filters{\
             info.nJetNoLeptons = len([j for j in jetSelCleanedH.product() if j.pt() >= 30.])
             info.nJetNoLeptons20 = len(jetSelCleanedH.product())
             jet_param_veto = [ (j.pt(), j.eta()) for j in jetSelCleanedH.product()]
-        
+
         event.getByLabel(('razorMJPFJetSel30'),jetSel30H)
         if not jetSel30H.isValid():
             print 'not jetSel30H.isValid()'
@@ -614,7 +614,7 @@ struct Filters{\
             pfcandstrkiso = pfcandstrkisoH.product()
             pfcandschg = pfcandschgH.product()
             pfcandsfromPV = pfcandsfromPVH.product()
-            
+
             veto10 = False
             for i in xrange(len(pfcandspt)):
                 if not(pfcandsfromPV.at(i)): continue
@@ -638,7 +638,7 @@ struct Filters{\
             pfcandstrkiso = pfcandstrkisoH.product()
             pfcandschg = pfcandschgH.product()
             pfcandsfromPV = pfcandsfromPVH.product()
-            
+
             veto10 = False
             for i in xrange(len(pfcandspt)):
                 if not(pfcandsfromPV.at(i)): continue
@@ -686,7 +686,7 @@ struct Filters{\
                 #MCT etc
                 vars.MCT = mct(mct_calc,hemi.leg1().p4(),hemi.leg2().p4())
                 vars.MRT = hemi.mRT()
-   
+
                 #now need to take care of the systematics...
                 #UP
                 event.getByLabel(('razorMJDiHemiLepBoxUp'),hemiLepH)
@@ -694,8 +694,8 @@ struct Filters{\
                     hemi = hemiLepH.product()[0]
                     vars.RSQ_JES_UP = hemi.Rsq()
                     vars.MR_JES_UP = hemi.mR()
-                 
-                
+
+
                 #DOWN
                 event.getByLabel(('razorMJDiHemiLepBoxDown'),hemiLepH)
                 if hemiLepH.isValid() and len( hemiLepH.product())>0.:
@@ -703,7 +703,7 @@ struct Filters{\
                     vars.RSQ_JES_DOWN = hemi.Rsq()
                     vars.MR_JES_DOWN = hemi.mR()
 
-                #helicity for leptonic case 
+                #helicity for leptonic case
                 subjets = hemi.leg1().sourcePtrs()
                 dR1 = 100000.
                 for j in subjets :
@@ -713,7 +713,7 @@ struct Filters{\
                 dR2 = 100000.
                 for j in subjets :
                     dR2 = min(dR2, deltaR ( leptons[0], j))
-                    
+
                 if dR1 < dR2 : subjets = hemi.leg1().sourcePtrs()
                 jets = []
                 dR = 100000.
@@ -724,13 +724,13 @@ struct Filters{\
                 if len(jets) > 0. :
                     csv = sorted([(j.btag(6),j) for j in jets], reverse=True)
                     tag = csv[0][1]
-                 
+
                     thetaH = calcHelicityLep(leptons[0], met, tag )
                     vars.hemiLepThetaH = thetaH
                     if thetaH == -2 :
                         countThetaH +=1
                         print countThetaH
-               
+
         else:
             #take the 20Gev jet control sample if relevant
             if info.nJet20 >= 6 and info.nJet < 6:
@@ -749,7 +749,7 @@ struct Filters{\
                 #run the hadronic top tagger
                 info.hemi1Count, vars.hemi1TopMass, vars.hemi1WMass, vars.hemi1ThetaH = topTag( hemi.leg1() )
                 info.hemi2Count, vars.hemi2TopMass, vars.hemi2WMass, vars.hemi2ThetaH = topTag( hemi.leg2() )
-                
+
                 #calculate a chi2
                 chi1 = (abs(vars.hemi1TopMass-173.5)/57.)+(abs(vars.hemi1WMass-80.385)/44.)
                 chi2 = (abs(vars.hemi2TopMass-173.5)/57.)+(abs(vars.hemi2WMass-80.385)/44.)
@@ -780,7 +780,7 @@ struct Filters{\
 
         event.getByLabel(('goodOfflinePrimaryVertices'),vertexH)
         info.nVertex = len(vertexH.product())
-        
+
         if runOnMC:
             #dump the PDF weights
             event.getByLabel(('dumpPdfWeights','cteq66'),pdfH)
@@ -800,7 +800,7 @@ struct Filters{\
                 trigger.getSelectionRegExp("^HLT_QuadJet[0-9]+_v[0-9]+$") or\
                 trigger.getSelectionRegExp("^HLT_QuadJet[0-9]+_L1FastJet_v[0-9]+$") or \
                 trigger.getSelectionRegExp("^HLT_SixJet[0-9]+.*_v[0-9]+$")
-            filters.quadJetTriggerFilter =   trigger.getSelectionRegExp("^HLT_QuadJet[0-9]+_v[0-9]+$") 
+            filters.quadJetTriggerFilter =   trigger.getSelectionRegExp("^HLT_QuadJet[0-9]+_v[0-9]+$")
             filters.eleTriggerFilter = trigger.getSelectionRegExp("^HLT_Ele[0-9]+_WP80_v[0-9]+$")
             filters.muTriggerFilter = trigger.getSelectionRegExp("^HLT_Mu[0-9]+_eta2p1_v[0-9]+$") or \
                 trigger.getSelectionRegExp("^HLT_IsoMu[0-9]+_eta2p1_v[0-9]+$") or \
@@ -812,15 +812,15 @@ struct Filters{\
             filters.quadJetTriggerFilter = False
             filters.muTriggerFilter = False
             filters.eleTriggerFilter = False
-        
+
         #recoCaloMETs_corMetGlobalMuons__RECO
         event.getByLabel(('corMetGlobalMuons'),calometH)
         calomet = calometH.product()[0]
         vars.caloMET = calomet.et()
         vars.caloMET_x = calomet.px()
-        vars.caloMET_y = calomet.py()    
+        vars.caloMET_y = calomet.py()
 
-           
+
         if runOnMC:
             event.getByLabel(('topGenInfo'),candH)
             if options.model is not None and candH.isValid() and len(candH.product()):
@@ -832,7 +832,7 @@ struct Filters{\
                     diTop = candH.product()[0]
                 vars.diTopPt = diTop.pt()
 
-           
+
             event.getByLabel(('genParticlesStatus3'), genH)
             genParticles  = std.vector('SUSYGenParticle')()
             thetaMixingTargetPlus1  = -0.437
@@ -863,7 +863,7 @@ struct Filters{\
             polarizationWeightMinus1 = Reweight_Stop_to_TopChi0_with_SUSYmodel (genParticles, thetaMixingTargetMinus1)
             vars.polarizationWeightPlus1  = polarizationWeightPlus1
             vars.polarizationWeightMinus1 = polarizationWeightMinus1
-        
+
             event.getByLabel(('simpleGenInfo'),filterH)
             if filterH.isValid():
                 info.genInfo = filterH.product()[0]
@@ -874,7 +874,7 @@ struct Filters{\
             vars.pileUpWeightABCD = pileUpH.product()[0]
             event.getByLabel(('vertexWeightSummer12MC53X2012BCDData'),pileUpH)
             vars.pileUpWeightBCD = pileUpH.product()[0]
-            
+
             event.getByLabel(('isrWeight'),doubleH)
             vars.isrWeightUp   = doubleH.product()[0]
             vars.isrWeight     = doubleH.product()[1]
@@ -892,4 +892,4 @@ struct Filters{\
     sample_counts = file(options.outputFile.replace('.root','.pkl'),'wb')
     pickle.dump(bins,sample_counts)
     sample_counts.close()
-    
+

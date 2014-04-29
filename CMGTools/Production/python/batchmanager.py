@@ -232,6 +232,9 @@ class BatchManager:
         elif batchCmd == 'nohup' or batchCmd == './batchScript.sh':
             print 'running locally : %s on %s' % (batchCmd, hostName)
             return 'LOCAL'
+        elif batchCmd == 'qsub':
+            print 'Running on the PSB of T3_US_Cornell: %s from %s:' % (batchCmd, hostName)
+            return 'QSUB'
         else:
             err = 'unknown batch command: X%sX' % batchCmd
             raise ValueError( err )           

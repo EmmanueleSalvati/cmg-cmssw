@@ -75,9 +75,13 @@ class IntegrityCheck(object):
 
         self.dataset = dataset
         self.options = options
-        self.topdir = castortools.lfnToCastor( castorBaseDir(user=options.user) )
+        if options.directpath != None:
+            self.topdir = options.directpath
+        else:
+            # self.topdir = '/store/user/salvati/Razor/MultiJet2012/CMGTuples/'
+            self.topdir = '/mnt/xrootd/user/salvati/Razor/MultiJet2012/\
+                CMSSW_5_3_14/CMGTuples/'
         self.directory = os.path.join(self.topdir, *self.dataset.split(os.sep))
-        
         #event counters
         self.eventsTotal = -1
         self.eventsSeen = 0

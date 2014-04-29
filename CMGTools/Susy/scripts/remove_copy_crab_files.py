@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """This module takes a txt as input, with the names (with full paths) of
 root files; it returns a list of which files are duplicates and should be
 deleted"""
