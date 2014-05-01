@@ -20,7 +20,7 @@ if __name__ == '__main__':
     LINE_COUNT = 0
     for line in TEXT_FILE:
         firstString = line.split('_')
-        fileNumber = int(firstString[1])
+        fileNumber = int(firstString[-3])
         TOTAL_LIST.append(fileNumber)
 
     TOTAL_LIST.sort()
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     MISSING_LIST = []
 
     if len(ARGS) > 1:
-        LAST_ELEMENT = int(sys.argv[1])
+        LAST_ELEMENT = int(ARGS[1])
     else:
         LAST_ELEMENT = TOTAL_LIST[len(TOTAL_LIST)-1]
 

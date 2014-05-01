@@ -8,6 +8,7 @@ import sys
 import ROOT as rt
 from itertools import groupby
 from itertools import chain
+import re
 
 
 def flatten(list_of_lists):
@@ -22,12 +23,9 @@ def find_duplicate_numbers(my_file):
     numbers_list = set()
     duplicates = []
     for line in my_file:
-        cmg_tuple = line.replace('/mnt/xrootd/user/salvati/Razor/MultiJet2012/'
-            'CMGTuples/MultiJet1Parked/Run2012B-05Nov2012-v2_Extension/'
-            'cmgTuple', 'cmgTuple')
+        cmg_tuple = re.sub(r'.+cmgTuple', 'cmgTuple', line)
         jobs_number = cmg_tuple[9:-12]
         if jobs_number.endswith('_'):
-            # print cmg_tuple, jobs_number
             jobs_number = jobs_number.rstrip('_')
             print cmg_tuple, jobs_number
 
@@ -48,9 +46,7 @@ def match_file_to_number(the_list, thefile):
 
     files_list = []
     for line in thefile:
-        cmg_tuple = line.replace('/mnt/xrootd/user/salvati/Razor/MultiJet2012/'
-            'CMGTuples/MultiJet1Parked/Run2012B-05Nov2012-v2_Extension/'
-            'cmgTuple', 'cmgTuple')
+        cmg_tuple = re.sub(r'.+cmgTuple', 'cmgTuple', line)
         job_number = cmg_tuple[9:-12]
         if job_number.endswith('_'):
             job_number = job_number.rstrip('_')
@@ -61,36 +57,38 @@ def match_file_to_number(the_list, thefile):
 
 
 def createSets(fileTuplesList):
-    """returns a list of sets of duplicate files; takes as input the list of tuples: numbers and corresponding files"""
+    """returns a list of sets of duplicate files; takes as input
+    the list of tuples: numbers and corresponding files"""
 
-    groupsList = []
+    groups_list = []
     for key, group in groupby(fileTuplesList, lambda x: x[0]):
-        tmpList = set()
+        tmp_list = set()
         for thing in group:
-            tmpList.add(thing[1])
-        groupsList.append(tmpList)
-    
-    return groupsList
+            tmp_list.add(thing[1])
+        groups_list.append(tmp_list)
+
+    return groups_list
 
 
 def checkRootFile(rootfile):
     """tells me whether the root file is good or not, returns True if good"""
-    f = rt.TFile(rootfile)
-    if f.TestBit(rt.TFile.kRecovered):
-        print "file recovered", f
-    return not f.IsZombie() and not (f.TestBit(rt.TFile.kRecovered))
+    rt.gROOT.ProcessLine(".x ~/tmp/rootlogon.C")
+    root_file = rt.TFile(rootfile)
+    if root_file.TestBit(rt.TFile.kRecovered):
+        print "file recovered", root_file
+    return not root_file.IsZombie() and not root_file.TestBit(rt.TFile.kRecovered)
 
 
 def makeSizeDictionary(fileSet):
     """Takes a set of files as input;
     Returns a dictionary (file: size)"""
 
-    fileDict = {}
+    file_dict = {}
     for line in fileSet:
         statinfo = os.stat(line)
-        fileDict[line] = statinfo.st_size
+        file_dict[line] = statinfo.st_size
 
-    return fileDict
+    return file_dict
 
 
 def compareFileSizes(fileDict):
@@ -113,16 +111,15 @@ def compareFileSizes(fileDict):
 
 if __name__ == '__main__':
 
-    ARGS = sys.argv[1]
+    ARGS = sys.argv[1:]
     if not ARGS:
         print 'usage: ./remove_copy_crab_files.py <txt-file>'
         sys.exit(1)
-    # myFile = open('DuplicateAttempt.txt')
-    INPUT_FILE = open(ARGS, 'r')
+    INPUT_FILE = open(ARGS[0], 'r')
     NUM_LIST = find_duplicate_numbers(INPUT_FILE)
     INPUT_FILE.close()
 
-    MY_FILE_AGAIN = open(ARGS, 'r')
+    MY_FILE_AGAIN = open(ARGS[0], 'r')
     FILE_LIST = match_file_to_number(NUM_LIST, MY_FILE_AGAIN)
 
     # Initiate the lists with good and bad files
@@ -131,7 +128,6 @@ if __name__ == '__main__':
 
     # Loop over the list of GROUPS of cmgTuples to find the good files
     GROUPS = createSets(FILE_LIST)
-    print GROUPS
     for group in GROUPS:
         fileDict = makeSizeDictionary(group)
         FILES_TO_KEEP.append(compareFileSizes(fileDict))
@@ -143,14 +139,10 @@ if __name__ == '__main__':
         else:
             FILES_TO_TRASH.append(element)
 
-    # for element in chain(GROUPS):  # This returns a list of sets
-    #    print element
-
-    OUT_FILE = open('listToTrash.txt', 'w')
-    for toTrash in FILES_TO_TRASH:
-        s = toTrash + '\n'
-        OUT_FILE.write(s)
-
+    OUT_FILE = open('listToTrash.src', 'w')
+    TRASH_STRING = '\nrm -f '.join(FILES_TO_TRASH)
+    OUT_FILE.write('rm -f ')
+    OUT_FILE.write(TRASH_STRING)
     OUT_FILE.close()
 
     print len(FILES_TO_KEEP)
