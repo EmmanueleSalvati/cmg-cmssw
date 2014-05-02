@@ -2,7 +2,7 @@
 
 """This module checks if there are missing files, simply by looking
 at the file numbers. It requires a txt file with the list of
-cmgTuple_XX_yyy.root, without the full path"""
+cmgTuple_XX_yyy.root, including the full path"""
 
 import sys
 
