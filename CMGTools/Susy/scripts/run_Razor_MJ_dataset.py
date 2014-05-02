@@ -26,7 +26,6 @@ if __name__ == '__main__':
     os.system("mkdir %s" % SUBMIT_DIR)
     os.system("mkdir %s" % LOG_DIR)
 
-    # N_FILES = int(sys.argv[1])
     N_FILES = int(ARGS[0])
 
     PWD = os.environ['PWD']
@@ -56,4 +55,4 @@ if __name__ == '__main__':
 
         runScript.close()
         os.system('echo qsub %s -o %s' % (runScriptName, LOG_DIR))
-        # os.system('qsub %s -o %s' % (runScriptName, LOG_DIR))
+        os.system('qsub %s -o %s' % (runScriptName, LOG_DIR))
