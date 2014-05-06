@@ -9,34 +9,28 @@ print sep_line
 
 process = cms.Process("PAT")
 
-
 print 'querying database for source files'
-
-
-runOnMC      = False
-runOnFastSim = False
+runOnMC = True
+runOnFastSim = True
 
 from CMGTools.Production.datasetToSource import *
 ## This is used to get the correct global tag below, and to find the files
-## It is *reset* automatically by ProductionTasks, so you can use it after the ProductionTasksHook
-datasetInfo = (
-#     'cmgtools_group',
-#    '/SMS-T2tt_mStop-150to350_mLSP-0to250_8TeV-Pythia6Z/
-#       Summer12-START52_V9_FSIM-v1/AODSIM/V5_B',
-     'CMS',
-     '/MultiJet1Parked/Run2012D-part2_17Jan2013-v1/AOD/'
-    '.*root')
+datasetInfo = ('', '/SMS-MadGraph_Pythia6Zstar_8TeV_T1tttt_2J_mGo-1100to1400_mLSP-525to1000_25GeVX25GeV_Binning/Summer12-START52_V9_FSIM-v2/AODSIM')
 
-process.source = datasetToSource(
-    *datasetInfo
+process.source = cms.Source(
+    "PoolSource",
+    noEventSort=cms.untracked.bool(True),
+    duplicateCheckMode=cms.untracked.string("noDuplicateCheck"),
+    fileNames=cms.untracked.vstring('DUMMY')
     )
-process.source.fileNames = cms.untracked.vstring('root://eoscms//eos/'
-    'cms/store/cmst3/user/lucieg/CMG/fileRun2012Dpart2_17Jan2013-v1.root')
-process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(10))
+
+# process.source.fileNames = cms.untracked.vstring('root://eoscms//eos/'
+#     'cms/store/cmst3/user/lucieg/CMG/fileRun2012Dpart2_17Jan2013-v1.root')
+process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(-1))
 
 print sep_line
 print process.source.fileNames
-print sep_line 
+print sep_line
 
 print 'loading the main CMG sequence'
 process.load('CMGTools.Common.PAT.PATCMG_cff')
@@ -65,17 +59,8 @@ if runOnMC is False:
     process.patMETs.addGenMET = False
     process.patMETsRaw.addGenMET = False
 
-    # setting up JSON file
-    # json = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/
-    #   certification/Collisions12/8TeV/DCSOnly/json_DCSONLY.txt'
-    # print 'using json file: ', json
-    # from CMGTools.Common.Tools.applyJSON_cff import *
-    # applyJSON(process, json )
 
-    # adding L2L3Residual corrections
     process.patJetCorrFactors.levels.append('L2L3Residual')
-    #if isNewerThan('CMSSW_5_2_0'):
-    #    process.patJetCorrFactorsCHSpruned.levels.append('L2L3Residual')
 
 
 process.muPFIsoDepositChargedAll.ExtractorPSet.DR_Veto = 1e-3
@@ -119,73 +104,11 @@ if ('Parked' in datasetInfo[1]) or ('22Jan2013' in datasetInfo[1]):
 process.p += process.postPathCounter
 
 
-## process.load("CMGTools.Common.skims.massPointFilter_cfi")
-## process.p += process.massPointFilter
-
-# For testing, you can remove some of the objects:
-# NOTE: there are a few dependencies between these sequences
-# process.PATCMGSequence.remove(process.PATCMGPileUpSubtractionSequence)
-# process.PATCMGSequence.remove(process.PATCMGRhoSequence)
-# process.PATCMGSequence.remove(process.PATCMGMuonSequence)
-# process.PATCMGSequence.remove(process.PATCMGElectronSequence)
-# process.PATCMGSequence.remove(process.PATCMGGenSequence)
-# process.PATCMGSequence.remove(process.PATCMGJetSequence)
-# process.PATCMGSequence.remove(process.PATCMGTauSequence)
-# process.PATCMGSequence.remove(process.PATCMGMetSequence)
-# process.p.remove(process.PATCMGJetCHSSequence)
-# process.p.remove(process.PATCMGTriggerSequence)
-# process.p.remove(process.PATCMGPhotonSequence)
-# process.p.remove(process.PATCMGVertexSequence)
-# process.p.remove(process.PATCMGPhotonSequence)
-# process.p.remove(process.MetSignificanceSequence)
-# process.p.remove(process.PATCMGMetRegressionSequence)
-# process.p.remove(process.PATCMGJetSequenceCHSpruned)
-
-## if runOnFastSim :
-##     process.vertexWeightSequence.remove(process.vertexWeight3DMay10ReReco)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DMay10ReReco)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DPromptRecov4)
-##     process.vertexWeightSequence.remove(process.vertexWeight3D05AugReReco)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DPromptRecov6)
-##     process.vertexWeightSequence.remove(process.vertexWeight3D2invfb)
-##     process.vertexWeightSequence.remove(process.vertexWeight3D2011B)
-##     process.vertexWeightSequence.remove(process.vertexWeight3D2011AB)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DFall11May10ReReco)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DFall11PromptRecov4)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DFall1105AugReReco)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DFall11PromptRecov6)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DFall112invfb)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DFall112011B)
-##     process.vertexWeightSequence.remove(process.vertexWeight3DFall112011AB)
-
-
-########################################################
-## PAT output definition
-########################################################
-
-## Output Module Configuration (expects a path 'p')
-from CMGTools.Common.eventContent.patEventContentCMG_cff import patEventContentCMG
-process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('patTuple.root'),
-                               # save only events passing the full path
-                               #SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
-                               # save PAT Layer 1 output; you need a '*' to
-                               # unpack the list of commands 'patEventContent'
-                               outputCommands = patEventContentCMG
-                               )
-# needed to override the CMG format, which drops the pat taus
-process.out.outputCommands.append('keep patTaus_selectedPatTaus_*_*')
-
-#FIXME now keeping the whole event content...
-# process.out.outputCommands.append('keep *_*_*_*')
-
-process.outpath = cms.EndPath(
-    # process.out
-    )
-
 ########################################################
 ## CMG output definition
 ########################################################
+
+process.outpath = cms.EndPath()
 
 from CMGTools.Common.eventContent.patEventContentCMG_cff import everything
 process.outcmg = cms.OutputModule(
@@ -195,8 +118,6 @@ process.outcmg = cms.OutputModule(
     outputCommands=everything,
     dropMetaData=cms.untracked.string('PRIOR')
     )
-#process.outcmg.outputCommands.append('keep *_pfNoPileUp_*_*')
-#process.outcmg.outputCommands.append('drop *_cmgCandidates_*_*')
 process.outpath += process.outcmg
 
 ########################################################
@@ -223,7 +144,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 10
 process.MessageLogger.suppressWarning =\
     cms.untracked.vstring('ecalLaserCorrFilter')
 ## Options and Output Report
-process.options = cms.untracked.PSet(wantSummary=cms.untracked.bool(True))
+process.options = cms.untracked.PSet(wantSummary=cms.untracked.bool(False))
 
 if not runOnMC and isNewerThan('CMSSW_5_2_0'):
     process.pfJetMETcorr.jetCorrLabel = cms.string("ak5PFL1FastL2L3Residual")
