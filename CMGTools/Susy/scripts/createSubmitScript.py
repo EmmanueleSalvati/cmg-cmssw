@@ -1,6 +1,14 @@
+#!/usr/bin/env python
+
 import sys
 
 if __name__ == '__main__':
+
+    args = sys.argv[1:]
+    if not args:
+        print 'usage: first_job last_job log_directory'
+        sys.exit(1)
+
 
     firstJob = int(sys.argv[1])
     lastJob = int(sys.argv[2])

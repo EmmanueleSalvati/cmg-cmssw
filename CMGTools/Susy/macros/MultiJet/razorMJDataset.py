@@ -94,7 +94,7 @@ if __name__ == '__main__':
                   VarParsing.varType.string,          # string, int, or float
                   "The SMS model to use in the error calculation")
     options.register ('runOnMC',
-                  True,
+                  False,
                   VarParsing.multiplicity.singleton, # singleton or list
                   VarParsing.varType.bool,          # string, int, or float
                   "Run on MC or data")
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         print 'Created %d chunks of length %s' % (len(chunks),options.maxFiles),options.index,[len(c) for c in chunks],len(chunks[options.index]),len(options.inputFiles)
         print options.inputFiles
 
-    pickleFile = options.outputFile.replace('.root','.pkl')
+    # pickleFile = options.outputFile.replace('.root','.pkl')
 
     rt.gROOT.ProcessLine("""
 struct Variables{\
@@ -389,10 +389,10 @@ struct Filters{\
 
     #print 'nevents',events.numEntries()
     for event in events:
-        print 'event', nEvents
+        # print 'event', nEvents
         nEvents+=1
-        ## if nEvents > 10000 :
-##             break
+        if nEvents > 2000 :
+            break
 
         info.event = event.object().id().event()
         info.lumi = event.object().id().luminosityBlock()
@@ -884,12 +884,13 @@ struct Filters{\
         if skimEvents and (vars.RSQ < 0.05 or vars.MR < 350.):
             print 'skimming'
             continue
-        print 'event',nEvents
+        if nEvents % 500 == 0:
+            print 'event', nEvents
         tree.Fill()
 
     store.write()
 
-    sample_counts = file(options.outputFile.replace('.root','.pkl'),'wb')
-    pickle.dump(bins,sample_counts)
-    sample_counts.close()
+    # sample_counts = file(options.outputFile.replace('.root','.pkl'),'wb')
+    # pickle.dump(bins,sample_counts)
+    # sample_counts.close()
 

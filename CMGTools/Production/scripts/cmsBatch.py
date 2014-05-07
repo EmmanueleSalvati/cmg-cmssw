@@ -149,6 +149,30 @@ done
    return script
 
 
+def batchScriptQSUB( jobDir, value ):
+   '''Prepare the batch script for nys1login on T3_US_Cornell'''
+
+   script = """#$ -S /bin/sh
+#$ -l arch=lx24-amd64
+#$ -m ea
+#$ -l mem_total=2G
+#$ -j oe
+
+export SCRAM_ARCH=slc5_amd64_gcc462
+source /cvmfs/cms.cern.ch/cmsset_default.sh
+
+cd %s
+eval `scramv1 runtime -sh`
+%s run_cfg.py
+xrdcp /tmp/susy_tree_%s.root root://osg-se.cac.cornell.edu//xrootd/path/cms/store/user/salvati/Razor/MultiJet2012/CMSSW_5_3_14/CMGTuples_skimmed/Run2012D-part2_17Jan2013-v1_8/susy_tree_%s.root
+rm -f /tmp/susy_tree_%s.root
+
+exit
+""" % (jobDir, prog, value, value, value)
+
+   return script
+
+
 class CmsBatchException( Exception):
    '''Exception class for this script'''
    
@@ -176,6 +200,8 @@ class MyBatchManager( BatchManager ):
          scriptFile.write( batchScriptCERN( storeDir, value) )    #here is the call to batchScriptCERN, i need to change value
       elif mode == 'LOCAL':
          scriptFile.write( batchScriptLocal( storeDir, value) )   #same as above but for batchScriptLocal
+      elif mode == 'QSUB':
+         scriptFile.write( batchScriptQSUB( jobDir, value ) )
       scriptFile.close()
       os.system('chmod +x %s' % scriptFileName)
 
@@ -196,10 +222,14 @@ class MyBatchManager( BatchManager ):
       cfgFile.write("sys.path.append('%s')\n" % os.path.dirname(jobDir) )
       cfgFile.write('from base_cfg import *\n')
       cfgFile.write('process.source = ' + process.source.dumpPython() + '\n')
+      cfgFile.write('process.out.fileName = cms.untracked.string(\'/tmp/susy_tree_%s.root\')\n' % value)
       if generator:
          cfgFile.write('process.RandomNumberGeneratorService = ' + process.RandomNumberGeneratorService.dumpPython() + '\n')
       cfgFile.close()
 
+      input_files = open(jobDir+'/input_files.txt', 'w')
+      input_files.write('\n'.join(fullSource.fileNames[iFileMin:iFileMax]))
+      input_files.close()
 
 batchManager = MyBatchManager()
 

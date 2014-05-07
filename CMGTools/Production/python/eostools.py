@@ -497,12 +497,20 @@ def _xrdcpSingleFile( pfn_src, pfn_dest):
 
 def move(src, dest):
     """Move filename1 to filename2 locally to the same server"""
-    
+
     src = eosToLFN(src)
     dest = eosToLFN(dest)
 
-    runXRDCommand(src,'mv', lfnToEOS(dest))
-                
+    runXRDCommand(src, 'mv', lfnToEOS(dest))
+
+def copy(src, dest):
+    """Copy filename1 to filename2 locally to the same server"""
+
+    src = eosToLFN(src)
+    dest = eosToLFN(dest)
+
+    runXRDCommand(src, 'cp', lfnToEOS(dest))
+
 def matchingFiles( path, regexp):
     """Return a list of files matching a regexp"""
 
