@@ -8,36 +8,36 @@ import subprocess
 
 import CMGTools.Production.eostools as castortools
 from CMGTools.Production.timeout import timed_out, TimedOutExc
-from CMGTools.Production.castorBaseDir import castorBaseDir
+# from CMGTools.Production.castorBaseDir import castorBaseDir
 from CMGTools.Production.dataset import CMSDataset
 
 class PublishToFileSystem(object):
     """Write a report to storage"""
-    
+
     def __init__(self, parent):
         if type(parent) == type(""):
             self.parent = parent
         else:
             self.parent = parent.__class__.__name__
-    
+
     def publish(self, report):
         """Publish a file"""
         for path in report['PathList']:
             _, name = tempfile.mkstemp('.txt', text=True)
-            json.dump(report, file(name,'w'), sort_keys=True, indent=4)
-            
-            fname = '%s_%s.txt' % (self.parent, report['DateCreated'])
-            #rename the file locally - TODO: This is a potential problem
+            json.dump(report, file(name, 'w'), sort_keys=True, indent=4)
+
+            # fname = '%s_%s.txt' % (self.parent, report['DateCreated'])
+            fname = '%s.txt' % (self.parent)
             nname = os.path.join(os.path.dirname(name),fname)
             os.rename(name, nname)
-            
+
             castor_path = castortools.lfnToCastor(path)
             new_name = '%s/%s' % (castor_path, fname)
-            castortools.xrdcp(nname,path)
+            castortools.xrdcp(nname, path)
             time.sleep(1)
-            
+
             if castortools.fileExists(new_name):
-                
+
                 #castortools.move(old_name, new_name)
                 #castortools.chmod(new_name, '644')
 
@@ -48,15 +48,15 @@ class PublishToFileSystem(object):
                 hashed_name = 'PublishToFileSystem-%s-%s' % (pathhash, fname)
                 shutil.move(nname, hashed_name)
                 print >> sys.stderr, "Cannot write to directory '%s' - written to local file '%s' instead." % (castor_path, hashed_name)
-                
-    def read(self, lfn, local = False):
+
+    def read(self, lfn, local=False):
         """Reads a report from storage"""
         if local:
             cat = file(lfn).read()
         else:
             cat = castortools.cat(castortools.lfnToCastor(lfn))
         return json.loads(cat)
-    
+
     def get(self, dir):
         """Finds the lastest file and reads it"""
         reg = '^%s_.*\.txt$' % self.parent
@@ -65,10 +65,10 @@ class PublishToFileSystem(object):
         if not files:
             return None
         return self.read(files[-1][1])
-                
+
 
 class IntegrityCheck(object):
-    
+
     def __init__(self, dataset, options):
         if not dataset.startswith(os.sep):
             dataset = os.sep + dataset
@@ -78,16 +78,16 @@ class IntegrityCheck(object):
         if options.directpath != None:
             self.topdir = options.directpath
         else:
-            # self.topdir = '/store/user/salvati/Razor/MultiJet2012/CMGTuples/'
-            self.topdir = '/mnt/xrootd/user/salvati/Razor/MultiJet2012/\
-                CMSSW_5_3_14/CMGTuples/'
+            self.topdir = ('/mnt/xrootd/user/salvati/Razor/MultiJet2012/'
+                'CMSSW_5_3_14/CMGTuples/')
         self.directory = os.path.join(self.topdir, *self.dataset.split(os.sep))
+        print self.directory
         #event counters
         self.eventsTotal = -1
         self.eventsSeen = 0
-        
+
         self.test_result = None
-    
+
     def query(self):
         """Query DAS to find out how many events are in the dataset"""
         from CMGTools.Production.ProductionTasks import BaseDataset
@@ -98,22 +98,21 @@ class IntegrityCheck(object):
         if output.has_key('Das'):
             self.options.name = output['Name']
             data = output['Das']
-            
+
         if data is None:
             raise Exception("Dataset '%s' not found in Das. Please check." % self.dataset)
         #get the number of events in the dataset
         self.eventsTotal = CMSDataset.findPrimaryDatasetEntries(self.options.name, self.options.min_run, self.options.max_run)
-    
+
     def stripDuplicates(self):
-        
         import re
-        
+
         filemask = {}
         for dirname, files in self.test_result.iteritems():
             for name, status in files.iteritems():
                 fname = os.path.join(dirname, name)
                 filemask[fname] = status
-        
+
         def isCrabFile(name):
             _, fname = os.path.split(name)
             base, _ = os.path.splitext(fname)
@@ -123,9 +122,9 @@ class IntegrityCheck(object):
             if len(tokens) > 2:
                 return (int(tokens[-3]), int(tokens[-2]))
             return None
-            
+
         files = {}
-        
+
         mmin = 1000000000
         mmax = -100000000
         for f in filemask:
@@ -134,7 +133,7 @@ class IntegrityCheck(object):
                 index = getCrabIndex(base)
                 if index is not None:
                     jobid, retry = index
-                    
+
                     mmin = min(mmin, jobid)
                     mmax = max(mmax, jobid)
                     if files.has_key(jobid) and filemask[f][0]:
@@ -163,7 +162,7 @@ class IntegrityCheck(object):
         if not castortools.fileExists(self.directory):
             raise Exception("The top level directory '%s' for this dataset does not exist" % self.directory)
 
-        self.query()
+        # self.query()
 
         test_results = {}
 
@@ -259,7 +258,7 @@ class IntegrityCheck(object):
                   'CreatedBy':self.options.user,
                   'DateCreated':datetime.datetime.now().strftime("%s"),
                   'Files':{}}
-        
+
         for dirname, files in self.test_result.iteritems():
             report['PathList'].append(dirname)
             for name, status in files.iteritems():
@@ -269,7 +268,7 @@ class IntegrityCheck(object):
                     totalGood += 1
                 else:
                     totalBad += 1
-                
+
         report['PrimaryDatasetEntries'] = self.eventsTotal
         if self.eventsTotal>0:
             report['PrimaryDatasetFraction'] = (self.eventsSeen/(1.*self.eventsTotal))

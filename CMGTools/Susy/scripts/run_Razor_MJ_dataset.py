@@ -8,32 +8,33 @@ import sys
 if __name__ == '__main__':
     ARGS = sys.argv[1:]
     if not ARGS:
-        print 'Usage: run_Razor_MJ_dataset.py <number_of_jobs>'
+        print 'Usage: run_Razor_MJ_dataset.py <number_of_jobs> '\
+        '<dataset> <datasetdir>\n'\
+        'where dataset is, e.g. Run2012D-part1_10Dec2012-v1\n'\
+        'and datasetdir is Run2012D-part1_10Dec2012-v1_3/\n\n'
         sys.exit(1)
 
-    DATA_SET = "Run2012D-part1_10Dec2012-v1"
-    DATA_SET_DIR = "Run2012D-part1_10Dec2012-v1_3/"
-    SUBMIT_DIR = "submit_" + DATA_SET
-    print SUBMIT_DIR
+    DATA_SET = ARGS[1]
+    DATA_SET_DIR = ARGS[2]
+    SUBMIT_DIR = "submit_" + DATA_SET_DIR
     INPUT_DIR = 'root://osg-se.cac.cornell.edu//xrootd/path/cms/'\
         'store/user/salvati/Razor/MultiJet2012/CMSSW_5_3_14/'\
         'CMGTuples_skimmed/' + DATA_SET_DIR
     OUT_DIR = '/store/user/salvati/Razor/MultiJet2012/'\
         'CMSSW_5_3_14/SusyTrees/%s' % DATA_SET_DIR
 
-    LOG_DIR = "step3_Run2012D-part1_10Dec2012-v1_3/"
+    LOG_DIR = "step3_" + DATA_SET_DIR
 
     os.system("mkdir %s" % SUBMIT_DIR)
     os.system("mkdir %s" % LOG_DIR)
 
-    # N_FILES = int(sys.argv[1])
     N_FILES = int(ARGS[0])
 
     PWD = os.environ['PWD']
 
     for i in range(1, N_FILES+1):
         fileName = 'susy_tree_%s.root' % str(i)
-        runScriptName = SUBMIT_DIR + "/batchscript_%s_%s.sh"\
+        runScriptName = SUBMIT_DIR + "batchscript_%s_%s.sh"\
             % (DATA_SET, str(i))
         runScript = open(runScriptName, 'w')
         runScript.write('#$ -S /bin/sh\n')
@@ -56,4 +57,4 @@ if __name__ == '__main__':
 
         runScript.close()
         os.system('echo qsub %s -o %s' % (runScriptName, LOG_DIR))
-        # os.system('qsub %s -o %s' % (runScriptName, LOG_DIR))
+        os.system('qsub %s -o %s' % (runScriptName, LOG_DIR))

@@ -14,9 +14,7 @@ if __name__ == '__main__':
     from optparse import OptionParser, OptionGroup
     
     usage = """usage: %prog [options] /Sample/Name/On/Castor
-
-e.g.: %prog -u wreece -p -w 'PFAOD_*.root' /MultiJet/Run2011A-05Aug2011-v1/AOD/V2
-    """
+e.g.: %prog -u uscms208 -p -w 'cmgTuple_*.root' -n /MultiJet/Run2011A-05Aug2011-v1/AOD --input-path=/mnt/xrootd/user/salvati/Razor/MultiJet2012/CMSSW_5_3_14/CMGTuples/ Run2012D-part1_10Dec2012-v1_3/"""
     das = Das.DASOptionParser(usage=usage)
     GROUP = OptionGroup(das.parser, 'edmIntegrityCheck Options',\
         'Options related to checking files on CASTOR')
@@ -34,7 +32,8 @@ e.g.: %prog -u wreece -p -w 'PFAOD_*.root' /MultiJet/Run2011A-05Aug2011-v1/AOD/V
     GROUP.add_option("-i", "--input-path", dest="directpath", default=None,
         help='Write directly the path, e.g. "/mnt/xrootd/user/salvati/Razor/'
         'MultiJet2012/CMGTuples/"')
-    GROUP.add_option("-w", "--wildcard", dest="wildcard", default=None,
+    GROUP.add_option("-w", "--wildcard", dest="wildcard",
+        default='cmgTuple_*.root',
         help='A UNIX style wildcard to specify which files to check')
     GROUP.add_option("--update", dest="update", default=False,
         action='store_true', help='Only update the status of corrupted files')
