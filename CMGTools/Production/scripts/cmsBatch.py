@@ -59,7 +59,7 @@ echo '************** WORKER *********************'
 echo
 
 free
-cat /proc/cpuinfo 
+cat /proc/cpuinfo
 
 echo
 echo '************** START *********************'
@@ -77,7 +77,7 @@ cp -r $jobdir $PBS_O_WORKDIR
    return script
 
 
-def batchScriptCERN(  remoteDir, index ):
+def batchScriptCERN(remoteDir, index):
    '''prepare the LSF version of the batch script, to run on LSF'''
    script = """#!/bin/bash
 # sets the queue
@@ -99,13 +99,13 @@ echo 'running'
 if [ $? != 0 ]; then
     echo wrong exit code! removing all root files
     rm *.root
-    exit 1 
+    exit 1
 fi
 echo 'sending the job directory back'
 """ % prog
 
    if remoteDir != '':
-      remoteDir = remoteDir.replace('/eos/cms','')
+      remoteDir = remoteDir.replace('/eos/cms', '')
       script += """
 for file in *.root; do
 newFileName=`echo $file | sed -r -e 's/\./_%s\./'`
@@ -115,10 +115,10 @@ cmsStageWithFailover.py -f $file $fullFileName
 #write the files as user readable but not writable
 eos chmod 755 /eos/cms/$fullFileName
 done
-""" % (index, remoteDir)         
+""" % (index, remoteDir)
       script += 'rm *.root\n'
    script += 'cp -rf * $LS_SUBCWD\n'
-   
+
    return script
 
 
@@ -149,10 +149,10 @@ done
    return script
 
 
-def batchScriptQSUB( jobDir, value ):
-   '''Prepare the batch script for nys1login on T3_US_Cornell'''
+def batchScriptQSUB(jobDir, value):
+    '''Prepare the batch script for nys1login on T3_US_Cornell'''
 
-   script = """#$ -S /bin/sh
+    script = """#$ -S /bin/sh
 #$ -l arch=lx24-amd64
 #$ -m ea
 #$ -l mem_total=2G
@@ -164,33 +164,34 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh
 cd %s
 eval `scramv1 runtime -sh`
 %s run_cfg.py
-xrdcp /tmp/susy_tree_%s.root root://osg-se.cac.cornell.edu//xrootd/path/cms/store/user/salvati/Razor/MultiJet2012/CMSSW_5_3_14/CMGTuples_skimmed/Run2012D-part2_17Jan2013-v1_8/susy_tree_%s.root
+xrdcp /tmp/susy_tree_%s.root root://osg-se.cac.cornell.edu//xrootd/path/cms/store/user/salvati/Razor/MultiJet2012/CMSSW_5_3_14/CMGTuples_skimmed/T1tttt/mGo-775to1075_mLSP-25to500/susy_tree_%s.root
 rm -f /tmp/susy_tree_%s.root
 
 exit
 """ % (jobDir, prog, value, value, value)
 
-   return script
+    return script
 
 
 class CmsBatchException( Exception):
    '''Exception class for this script'''
-   
+
    def __init__(self, value):
       self.value = value
-      
+
    def __str__(self):
-      return str( self.value)
+      return str(self.value)
 
 
-class MyBatchManager( BatchManager ):
-   '''Batch manager specific to cmsRun processes.''' 
+class MyBatchManager(BatchManager):
+   '''Batch manager specific to cmsRun processes.'''
 
-   def PrepareJobUser(self, jobDir, value ):
+   def PrepareJobUser(self, jobDir, value):
       '''Prepare one job. This function is called by the base class.'''
-      
+      # print "Mannaggia cristo:", process.source.fileNames
       process.source = fullSource.clone()
-      
+      # print "Mannaggiallamadonna", process.source.fileNames
+
       #prepare the batch script
       scriptFileName = jobDir+'/batchScript.sh'
       scriptFile = open(scriptFileName,'w')
@@ -211,9 +212,11 @@ class MyBatchManager( BatchManager ):
          randSvc = RandomNumberServiceHelper(process.RandomNumberGeneratorService)
          randSvc.populate()
       else:
+         print 'This is the fucking value:', value
          iFileMin = (value-1)*grouping 
          iFileMax = (value)*grouping 
-         process.source.fileNames = fullSource.fileNames[iFileMin:iFileMax]
+         print "These are the fuckgin iFileMin and Max", iFileMin, iFileMax
+         # process.source.fileNames = fullSource.fileNames[iFileMin:iFileMax]
          print process.source
       cfgFile = open(jobDir+'/run_cfg.py','w')
       cfgFile.write('import FWCore.ParameterSet.Config as cms\n\n')
@@ -222,6 +225,7 @@ class MyBatchManager( BatchManager ):
       cfgFile.write("sys.path.append('%s')\n" % os.path.dirname(jobDir) )
       cfgFile.write('from base_cfg import *\n')
       cfgFile.write('process.source = ' + process.source.dumpPython() + '\n')
+      # cmgFile.write('process.source.fileNames = ' + process.source.fileNames
       cfgFile.write('process.out.fileName = cms.untracked.string(\'/tmp/susy_tree_%s.root\')\n' % value)
       if generator:
          cfgFile.write('process.RandomNumberGeneratorService = ' + process.RandomNumberGeneratorService.dumpPython() + '\n')
@@ -297,7 +301,7 @@ if len(args)!=2:
 # testing that we run a sensible batch command. If not, exit.
 runningMode = None
 try:
-   runningMode = batchManager.RunningMode( options.batch )
+   runningMode = batchManager.RunningMode(options.batch)
 except CmsBatchException as err:
    print err
    sys.exit(1)
@@ -335,22 +339,24 @@ try:
 except:
    print 'No input file. This is a generator process.'
    generator = True
-   listOfValues = [i+1 for i in range( nJobs )] #Here is where the list of values is created 
+   listOfValues = [i+1 for i in range( nJobs )] #Here is where the list of values is created
 else:
-   print "Number of files in the source:",len(process.source.fileNames), ":"
-   pprint.pprint(process.source.fileNames)
-   nFiles = len(process.source.fileNames)
-   nJobs = nFiles / grouping
-   if (nJobs!=0 and (nFiles % grouping) > 0) or nJobs==0:
+    print "Number of files in the source:", len(process.source.fileNames), ":"
+    pprint.pprint(process.source.fileNames)
+    nFiles = len(process.source.fileNames)
+    nJobs = nFiles / grouping
+    if (nJobs!=0 and (nFiles % grouping) > 0) or nJobs==0:
       nJobs = nJobs + 1
-      
-   print "number of jobs to be created: ", nJobs
-   listOfValues = [i+1 for i in range( nJobs )] #OR Here is where the list of values is created
-   #here i change from e.g 0-19 to 1-20
 
-batchManager.PrepareJobs( listOfValues ) #PrepareJobs with listOfValues as param
+    print "number of jobs to be created: ", nJobs
+    listOfValues = [i+1 for i in range( nJobs )] #OR Here is where the list of values is created
+    # listOfValues = [10, 20, 41, 42, 51, 64, 67, 70]
+    # here i change from e.g 0-19 to 1-20
+
+batchManager.PrepareJobs(listOfValues) #PrepareJobs with listOfValues as param
 
 # preparing master cfg file
+
 
 cfgFile = open(batchManager.outputDir_+'/base_cfg.py','w')
 cfgFile.write( process.dumpPython() + '\n')
@@ -363,7 +369,7 @@ if runningMode == 'LOCAL':
    # of course, not the case when running with nohup
    # because we will never have enough processes to saturate castor.
    waitingTime = 0
-batchManager.SubmitJobs( waitingTime )
+batchManager.SubmitJobs(waitingTime)
 
 
 # logging
@@ -373,7 +379,7 @@ from logger import logger
 oldPwd = os.getcwd()
 os.chdir(batchManager.outputDir_)
 logDir = 'Logger'
-os.system( 'mkdir ' + logDir )
+os.system('mkdir ' + logDir)
 log = logger( logDir )
 if doCVSTag==False:
    print 'cmsBatch2L2Q will NOT tag CVS'
@@ -388,8 +394,8 @@ if not batchManager.options_.negate:
    if batchManager.remoteOutputDir_ != "":
       # we don't want to crush an existing log file on castor
       #COLIN could protect the logger against that.
-      log.stageOut( batchManager.remoteOutputDir_ )
-      
+      log.stageOut(batchManager.remoteOutputDir_)
+
 os.chdir( oldPwd )
 
 

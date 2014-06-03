@@ -19,9 +19,9 @@ if __name__ == '__main__':
     SUBMIT_DIR = "submit_" + DATA_SET_DIR
     INPUT_DIR = 'root://osg-se.cac.cornell.edu//xrootd/path/cms/'\
         'store/user/salvati/Razor/MultiJet2012/CMSSW_5_3_14/'\
-        'CMGTuples_skimmed/' + DATA_SET_DIR
+        'CMGTuples_skimmed/T1tttt/' + DATA_SET_DIR
     OUT_DIR = '/store/user/salvati/Razor/MultiJet2012/'\
-        'CMSSW_5_3_14/SusyTrees/%s' % DATA_SET_DIR
+        'CMSSW_5_3_14/SusyTrees/T1tttt/%s' % DATA_SET_DIR
 
     LOG_DIR = "step3_" + DATA_SET_DIR
 
@@ -34,24 +34,28 @@ if __name__ == '__main__':
 
     for i in range(1, N_FILES+1):
         fileName = 'susy_tree_%s.root' % str(i)
-        runScriptName = SUBMIT_DIR + "batchscript_%s_%s.sh"\
-            % (DATA_SET, str(i))
+        runScriptName = SUBMIT_DIR + "/batchscript_%s_%s.sh"\
+            % (DATA_SET_DIR, str(i))
+            # % (DATA_SET, str(i))
         runScript = open(runScriptName, 'w')
         runScript.write('#$ -S /bin/sh\n')
         runScript.write('#$ -l arch=lx24-amd64\n')
         runScript.write('#PBS -m ea\n')
         runScript.write('#PBS -M es575@cornell.edu\n')
-        runScript.write('#$ -l mem_total=2G\n')
+        # runScript.write('#$ -l mem_total=2G\n')
         runScript.write('#PBS -j oe\n\n')
         runScript.write('source /cvmfs/cms.cern.ch/cmsset_default.sh\n\n')
         runScript.write('export SCRAM_ARCH=slc5_amd64_gcc462\n')
         runScript.write('cd %s\n' % PWD)
         runScript.write('eval `scramv1 runtime -sh`\n')
         runScript.write('python macros/MultiJet/razorMJDataset.py '
-            'outputFile=/tmp/%s runOnMC=False datasetName=%s '\
-            'inputFiles=%s%s\n\n' % (fileName, INPUT_DIR, INPUT_DIR, fileName))
+                        'outputFile=/tmp/%s runOnMC=True datasetName=%s '\
+                        'inputFiles=%s/%s\n\n' %\
+                        (fileName, DATA_SET, INPUT_DIR, fileName))
+                        # 'inputFiles=%s%s\n\n' %\
+                        # (fileName, INPUT_DIR, INPUT_DIR, fileName))
         runScript.write('xrdcp /tmp/%s root://osg-se.cac.cornell.edu/'\
-            '/xrootd/path/cms/%s%s\n' % (fileName, OUT_DIR, fileName))
+            '/xrootd/path/cms/%s/%s\n' % (fileName, OUT_DIR, fileName))
         runScript.write('rm -f /tmp/%s\n\n' % fileName)
         runScript.write('exit')
 

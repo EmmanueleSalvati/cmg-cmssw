@@ -113,9 +113,9 @@ if __name__ == '__main__':
     options.parseArguments()
     runOnMC = options.runOnMC
     mLSPskim = float(options.mLSP)
-    #mStopSkim = float(options.mStop)
+    mStopSkim = float(options.mStop)
 
-    runSMS = False
+    runSMS = True
     if options.datasetName:
         runSMS = 'SMS' in options.datasetName
         runOnMC = 'START' in options.datasetName
@@ -391,8 +391,8 @@ struct Filters{\
     for event in events:
         # print 'event', nEvents
         nEvents+=1
-        if nEvents > 2000 :
-            break
+        # if nEvents > 2000 :
+        #     break
 
         info.event = event.object().id().event()
         info.lumi = event.object().id().luminosityBlock()

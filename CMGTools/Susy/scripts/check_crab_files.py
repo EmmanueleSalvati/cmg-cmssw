@@ -20,7 +20,7 @@ if __name__ == '__main__':
     TOTAL_LIST = []
     LINE_COUNT = 0
     for line in TEXT_FILE:
-        check_root_file(line.rstrip('\n'), True)
+        print check_root_file(line.rstrip('\n'), True)
         firstString = line.split('_')
         if len(ARGS) == 2:
             fileNumber = int(firstString[-3])
