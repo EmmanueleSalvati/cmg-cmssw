@@ -31,5 +31,7 @@ razorMJjetEventContent += cms.untracked.vstring(
                                            'keep double_vertexWeight*_*_MJSkim',
                                            'keep *_razorMJTrackIsolationMaker_*_*',
                                            'keep *_isrWeight_*_*',
-                                           'keep *_genParticlesStatus3_*_*'
+                                           'keep *_genParticlesStatus3_*_*',
+                                           'keep *_genParticlesPruned_*_*',
+                                           'keep *_simpleGenInfo_*_*'
                                            )
