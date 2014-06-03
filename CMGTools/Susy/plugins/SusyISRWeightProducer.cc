@@ -19,7 +19,7 @@ class SusyISRWeightProducer : public edm::EDFilter{
  public:
 
   SusyISRWeightProducer(const edm::ParameterSet& ps):
-    src_(ps.getParameter<edm::InputTag>("src")){
+    src_(ps.getParameter<edm::InputTag>("src")), model_(ps.getUntrackedParameter<double>("model")){
     produces<std::vector< double  > >();
   }
 
@@ -29,13 +29,20 @@ class SusyISRWeightProducer : public edm::EDFilter{
     edm::Handle<view> handle;
     iEvent.getByLabel( src_, handle );
   
+    int pdgId = 0;
+    if (model_== 2 )
+      pdgId = 1000006;
+    if (model_== 1 )
+      pdgId = 1000021;
+    
     reco::LeafCandidate::LorentzVector result;
-   
+    
+    
     for(view::const_iterator it = handle->begin(); it != handle->end(); ++it){
       if(it->status() != 3){
 	continue;
       }
-      if(abs(it->pdgId()) == 1000006){
+      if(abs(it->pdgId()) == pdgId){
 	result += it->p4();
       }
     }
@@ -75,6 +82,7 @@ class SusyISRWeightProducer : public edm::EDFilter{
 
  private:
   edm::InputTag src_;
+  double model_;
 };
 
 #include "FWCore/Framework/interface/MakerMacros.h"
